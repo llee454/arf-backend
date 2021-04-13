@@ -1,0 +1,14 @@
+{
+  "name": "arf_utils",
+  "version": "0.0.1",
+  "author": "Larry D. Lee Jr. <llee454@gmail.com>",
+  "synopsis": "Utilities for tracking data using the Applied Rationality Framework.",
+  "category": [ "Self-Improvement" ],
+  "license": "BSD-3-Clause",
+  "licenseFile": "LICENSE",
+  "dependencies": {
+    "cdbi" : ">= 1.0.0",
+    "det-parse" : ">= 0.0.0",
+    "regexp" : ">= 1.0.0"
+  }
+}

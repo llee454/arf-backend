@@ -1,0 +1,62 @@
+{- ERD specification transformed from /home/ubuntu/test_cypm_project/src/arf.erdterm -}
+
+ ERD "arf"
+   [Entity "Entry"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "Timestamp" (DateDom Nothing) NoKey False],
+    Entity "Event"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "Timestamp" (StringDom Nothing) NoKey False,
+            Attribute "EntryEvent_entryKey" (KeyDom "Entry") Unique False],
+    Entity "Attribute"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "EntryAttribute_entryKey" (KeyDom "Entry") Unique False],
+    Entity "Action"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "EntryAction_entryKey" (KeyDom "Entry") Unique False],
+    Entity "Activity"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "EntryActivity_entryKey" (KeyDom "Entry") Unique False],
+    Entity "Measurement"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "Unit" (StringDom Nothing) NoKey False,
+            Attribute "Value" (FloatDom Nothing) NoKey False,
+            Attribute "Precision" (StringDom Nothing) NoKey False,
+            Attribute "EntryMeasurement_action_entryKey" (KeyDom "Entry") Unique False,
+            Attribute "EntryMeasurement_of_entryKey" (KeyDom "Entry") Unique False],
+    Entity "Duration"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "EntryDuration_entryKey" (KeyDom "Entry") Unique False],
+    Entity "Weight"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "EntryWeight_entryKey" (KeyDom "Entry") Unique False],
+    Entity "Circumference"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "EntryCircumference_entryKey" (KeyDom "Entry") Unique False]]
+   [Relationship "Circumference_entry"
+                 [REnd "Circumference" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "circumference" (Exactly 1)],
+    Relationship "Weight_entry"
+                 [REnd "Weight" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "weight" (Exactly 1)],
+    Relationship "Duration_entry"
+                 [REnd "Duration" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "duration" (Exactly 1)],
+    Relationship "Measurement_of_entry"
+                 [REnd "Measurement" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "of" (Exactly 1)],
+    Relationship "Measurement_action_entry"
+                 [REnd "Measurement" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "action" (Exactly 1)],
+    Relationship "Activity_entry"
+                 [REnd "Activity" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "activity" (Exactly 1)],
+    Relationship "Action_entry"
+                 [REnd "Action" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "action" (Exactly 1)],
+    Relationship "Attribute_entry"
+                 [REnd "Attribute" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "attribute" (Exactly 1)],
+    Relationship "Event_entry"
+                 [REnd "Event" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "event" (Exactly 1)]]
