@@ -6,6 +6,7 @@ arf =
   ERD "arf"
    [
      Entity "Entry" [Attribute "Timestamp" (DateDom Nothing) NoKey False],
+     Entity "Entity" [Attribute "Name" (StringDom Nothing) NoKey False],
      Entity "Event" [Attribute "Timestamp" (StringDom Nothing) NoKey False],
      Entity "Attribute" [],
      Entity "Action" [],
@@ -19,6 +20,9 @@ arf =
      Entity "Circumference" []
    ]
    [
+     Relationship "Entity_entry" [
+       REnd "Entity" "entry" (Between 0 (Max 1)),
+       REnd "Entry" "entity" (Exactly 1)],
      Relationship "Event_entry" [
        REnd "Event" "entry" (Between 0 (Max 1)),
        REnd "Entry" "event" (Exactly 1)],

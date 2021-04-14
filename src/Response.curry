@@ -10,26 +10,24 @@ import IOExts
 data Response = Response { err :: Bool, content :: String }
 
 --- The initial response.
-initResponse :: Response
-initResponse = Response False ""
+init :: Response
+init = Response False ""
 
 --- Returns the given string as a response.
-write :: String -> IORef Response -> IO ()
-write msg ref = modifyIORef ref (\res -> res {content = (content res) ++ msg})
+write :: String -> Response -> Response
+write msg (Response err content) = Response err (content ++ msg)
 
 --- Returns the given string as an error response.
-writeErr :: String -> IORef Response -> IO ()
-writeErr msg ref = modifyIORef ref (\res -> res { err = True, content = msg })
+--- Note: if an error has already been queued, the earlier failure is returned.
+writeErr :: String -> Response -> Response
+writeErr msg res@(Response err _)
+  | err       = res
+  | otherwise = Response True msg
 
 --- Sends the response.
-respond :: IORef Response -> IO ()
-respond ref = do
-  Response err content <- readIORef ref
+respond :: Response -> IO ()
+respond (Response err content) = do
   putStrLn "Content-type: text/html"
   when err $ putStr "Status: 500 Internal Server Error"
   putStrLn "\n"
   putStrLn content
-
---- Initialize the environment.
-init :: IO (IORef Response)
-init = newIORef initResponse

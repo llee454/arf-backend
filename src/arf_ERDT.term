@@ -4,6 +4,10 @@
    [Entity "Entry"
            [Attribute "Key" (IntDom Nothing) PKey False,
             Attribute "Timestamp" (DateDom Nothing) NoKey False],
+    Entity "Entity"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "Name" (StringDom Nothing) NoKey False,
+            Attribute "EntryEntity_entryKey" (KeyDom "Entry") Unique False],
     Entity "Event"
            [Attribute "Key" (IntDom Nothing) PKey False,
             Attribute "Timestamp" (StringDom Nothing) NoKey False,
@@ -59,4 +63,7 @@
                   REnd "Entry" "attribute" (Exactly 1)],
     Relationship "Event_entry"
                  [REnd "Event" "entry" (Between 0 (Max 1)),
-                  REnd "Entry" "event" (Exactly 1)]]
+                  REnd "Entry" "event" (Exactly 1)],
+    Relationship "Entity_entry"
+                 [REnd "Entity" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "entity" (Exactly 1)]]

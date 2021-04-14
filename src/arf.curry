@@ -19,6 +19,12 @@ data Entry = Entry EntryID Time.ClockTime
 data EntryID = EntryID Int
  deriving (Eq,Show,Read)
 
+data Entity = Entity EntityID String EntryID
+ deriving (Eq,Show,Read)
+
+data EntityID = EntityID Int
+ deriving (Eq,Show,Read)
+
 data Event = Event EventID String EntryID
  deriving (Eq,Show,Read)
 
@@ -181,6 +187,150 @@ deleteEntry =
 --- Updates an existing `Entry` entry by its key.
 updateEntry :: Entry -> Database.CDBI.Connection.DBAction ()
 updateEntry = Database.CDBI.ER.updateEntry entry_CDBI_Description
+
+--- The ER description of the `Entity` entity.
+entity_CDBI_Description :: Database.CDBI.Description.EntityDescription Entity
+entity_CDBI_Description =
+  Database.CDBI.Description.ED "Entity"
+   [Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeString
+   ,Database.CDBI.Connection.SQLTypeInt]
+   (\(Entity (EntityID key) name (EntryID entryEntity_entryKey)) ->
+     [Database.CDBI.Connection.SQLInt key
+     ,Database.CDBI.Connection.SQLString name
+     ,Database.CDBI.Connection.SQLInt entryEntity_entryKey])
+   (\(Entity _ name (EntryID entryEntity_entryKey)) ->
+     [Database.CDBI.Connection.SQLNull
+     ,Database.CDBI.Connection.SQLString name
+     ,Database.CDBI.Connection.SQLInt entryEntity_entryKey])
+   (\[Database.CDBI.Connection.SQLInt key
+     ,Database.CDBI.Connection.SQLString name
+     ,Database.CDBI.Connection.SQLInt entryEntity_entryKey] ->
+     Entity (EntityID key) name (EntryID entryEntity_entryKey))
+
+--- The database table of the `Entity` entity.
+entityTable :: Database.CDBI.Description.Table
+entityTable = "Entity"
+
+--- The database column `Key` of the `Entity` entity.
+entityColumnKey :: Database.CDBI.Description.Column EntityID
+entityColumnKey =
+  Database.CDBI.Description.Column "\"Key\"" "\"Entity\".\"Key\""
+
+--- The database column `Name` of the `Entity` entity.
+entityColumnName :: Database.CDBI.Description.Column String
+entityColumnName =
+  Database.CDBI.Description.Column "\"Name\"" "\"Entity\".\"Name\""
+
+--- The database column `EntryEntity_entryKey` of the `Entity` entity.
+entityColumnEntryEntity_entryKey :: Database.CDBI.Description.Column EntryID
+entityColumnEntryEntity_entryKey =
+  Database.CDBI.Description.Column "\"EntryEntity_entryKey\""
+   "\"Entity\".\"EntryEntity_entryKey\""
+
+--- The description of the database column `Key` of the `Entity` entity.
+entityKeyColDesc :: Database.CDBI.Description.ColumnDescription EntityID
+entityKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Entity\".\"Key\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\(EntityID key) -> Database.CDBI.Connection.SQLInt key)
+   (\(Database.CDBI.Connection.SQLInt key) -> EntityID key)
+
+--- The description of the database column `Name` of the `Entity` entity.
+entityNameColDesc :: Database.CDBI.Description.ColumnDescription String
+entityNameColDesc =
+  Database.CDBI.Description.ColDesc "\"Entity\".\"Name\""
+   Database.CDBI.Connection.SQLTypeString
+   (\name -> Database.CDBI.Connection.SQLString name)
+   (\(Database.CDBI.Connection.SQLString name) -> name)
+
+--- The description of the database column `EntryEntity_entryKey` of the `Entity` entity.
+entityEntryEntity_entryKeyColDesc
+  :: Database.CDBI.Description.ColumnDescription EntryID
+entityEntryEntity_entryKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Entity\".\"EntryEntity_entryKey\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\(EntryID entryEntity_entryKey) ->
+     Database.CDBI.Connection.SQLInt entryEntity_entryKey)
+   (\(Database.CDBI.Connection.SQLInt entryEntity_entryKey) ->
+     EntryID entryEntity_entryKey)
+
+--- Gets the attribute `Key` of the `Entity` entity.
+entityKey :: Entity -> EntityID
+entityKey (Entity a _ _) = a
+
+--- Gets the attribute `Name` of the `Entity` entity.
+entityName :: Entity -> String
+entityName (Entity _ a _) = a
+
+--- Gets the attribute `EntryEntity_entryKey` of the `Entity` entity.
+entityEntryEntity_entryKey :: Entity -> EntryID
+entityEntryEntity_entryKey (Entity _ _ a) = a
+
+--- Sets the attribute `Key` of the `Entity` entity.
+setEntityKey :: Entity -> EntityID -> Entity
+setEntityKey (Entity _ b2 b1) a = Entity a b2 b1
+
+--- Sets the attribute `Name` of the `Entity` entity.
+setEntityName :: Entity -> String -> Entity
+setEntityName (Entity a2 _ b1) a = Entity a2 a b1
+
+--- Sets the attribute `EntryEntity_entryKey` of the `Entity` entity.
+setEntityEntryEntity_entryKey :: Entity -> EntryID -> Entity
+setEntityEntryEntity_entryKey (Entity a3 a2 _) a = Entity a3 a2 a
+
+--- id-to-value function for entity `Entity`.
+entityID :: EntityID -> Database.CDBI.Criteria.Value EntityID
+entityID (EntityID key) = Database.CDBI.Criteria.idVal key
+
+--- id-to-int function for entity `Entity`.
+entityKeyToInt :: EntityID -> Int
+entityKeyToInt (EntityID key) = key
+
+--- Shows the key of a `Entity` entity as a string.
+--- This is useful if a textual representation of the key is necessary
+--- (e.g., as URL parameters in web pages), but it should no be used
+--- to store keys in other attributes!
+showEntityKey :: Entity -> String
+showEntityKey entry =
+  Database.CDBI.ER.showDatabaseKey "Entity" entityKeyToInt (entityKey entry)
+
+--- Transforms a string into a key of a `Entity` entity.
+--- Nothing is returned if the string does not represent a meaningful key.
+readEntityKey :: String -> Maybe EntityID
+readEntityKey = Database.CDBI.ER.readDatabaseKey "Entity" EntityID
+
+--- Gets all `Entity` entities.
+queryAllEntitys :: Database.CDBI.Connection.DBAction [Entity]
+queryAllEntitys = Database.CDBI.ER.getAllEntries entity_CDBI_Description
+
+--- Gets all `Entity` entities satisfying a given predicate.
+queryCondEntity
+  :: (Entity -> Bool) -> Database.CDBI.Connection.DBAction [Entity]
+queryCondEntity = Database.CDBI.ER.getCondEntries entity_CDBI_Description
+
+--- Gets a `Entity` entry by a given key.
+getEntity :: EntityID -> Database.CDBI.Connection.DBAction Entity
+getEntity =
+  Database.CDBI.ER.getEntryWithKey entity_CDBI_Description entityColumnKey
+   entityID
+
+--- Inserts a new `Entity` entity.
+newEntityWithEntryEntity_entryKey
+  :: String -> EntryID -> Database.CDBI.Connection.DBAction Entity
+newEntityWithEntryEntity_entryKey name_p entryEntity_entryKey_p =
+  Database.CDBI.ER.insertNewEntry entity_CDBI_Description setEntityKey EntityID
+   (Entity (EntityID 0) name_p entryEntity_entryKey_p)
+
+--- Deletes an existing `Entity` entry by its key.
+deleteEntity :: Entity -> Database.CDBI.Connection.DBAction ()
+deleteEntity =
+  Database.CDBI.ER.deleteEntry entity_CDBI_Description entityColumnKey
+   (entityID . entityKey)
+
+--- Updates an existing `Entity` entry by its key.
+updateEntity :: Entity -> Database.CDBI.Connection.DBAction ()
+updateEntity = Database.CDBI.ER.updateEntry entity_CDBI_Description
 
 --- The ER description of the `Event` entity.
 event_CDBI_Description :: Database.CDBI.Description.EntityDescription Event
@@ -1341,6 +1491,7 @@ createNewDB dbfile =
     cstr =
       unlines
        ["create table 'Entry'('Key' integer primary key ,'Timestamp' string not null);"
+       ,"create table 'Entity'('Key' integer primary key ,'Name' string not null ,'EntryEntity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Event'('Key' integer primary key ,'Timestamp' string not null ,'EntryEvent_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Attribute'('Key' integer primary key ,'EntryAttribute_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Action'('Key' integer primary key ,'EntryAction_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
@@ -1355,6 +1506,7 @@ createNewDB dbfile =
 saveDBTo :: String -> IO ()
 saveDBTo dir =
   do Database.CDBI.ER.saveDBTerms entry_CDBI_Description sqliteDBFile dir
+     Database.CDBI.ER.saveDBTerms entity_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms event_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms attribute_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms action_CDBI_Description sqliteDBFile dir
@@ -1370,6 +1522,7 @@ saveDBTo dir =
 restoreDBFrom :: String -> IO ()
 restoreDBFrom dir =
   do Database.CDBI.ER.restoreDBTerms entry_CDBI_Description sqliteDBFile dir
+     Database.CDBI.ER.restoreDBTerms entity_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms event_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms attribute_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms action_CDBI_Description sqliteDBFile dir

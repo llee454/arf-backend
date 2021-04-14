@@ -21,9 +21,14 @@ SQLParserInfoType.PInfo "/home/ubuntu/test_cypm_project/src/Arf.sqlite" "arf"
  ,(("Entry","entry","Attribute"),SQLParserInfoType.OnetoN "Attribute_entry")
  ,(("Attribute","attribute","Entry"),SQLParserInfoType.NtoOne "Attribute_entry")
  ,(("Entry","entry","Event"),SQLParserInfoType.OnetoN "Event_entry")
- ,(("Event","event","Entry"),SQLParserInfoType.NtoOne "Event_entry")]
+ ,(("Event","event","Entry"),SQLParserInfoType.NtoOne "Event_entry")
+ ,(("Entry","entry","Entity"),SQLParserInfoType.OnetoN "Entity_entry")
+ ,(("Entity","entity","Entry"),SQLParserInfoType.NtoOne "Entity_entry")]
  [("entryKey",False)
  ,("entryTimestamp",False)
+ ,("entityKey",False)
+ ,("entityName",False)
+ ,("entityEntryEntity_entryKey",False)
  ,("eventKey",False)
  ,("eventTimestamp",False)
  ,("eventEntryEvent_entryKey",False)
@@ -46,6 +51,7 @@ SQLParserInfoType.PInfo "/home/ubuntu/test_cypm_project/src/Arf.sqlite" "arf"
  ,("circumferenceKey",False)
  ,("circumferenceEntryCircumference_entryKey",False)]
  [("entry",("Entry",["Key","Timestamp"]))
+ ,("entity",("Entity",["Key","Name","EntryEntity_entryKey"]))
  ,("event",("Event",["Key","Timestamp","EntryEvent_entryKey"]))
  ,("attribute",("Attribute",["Key","EntryAttribute_entryKey"]))
  ,("action",("Action",["Key","EntryAction_entryKey"]))
@@ -63,6 +69,9 @@ SQLParserInfoType.PInfo "/home/ubuntu/test_cypm_project/src/Arf.sqlite" "arf"
  ,("circumference",("Circumference",["Key","EntryCircumference_entryKey"]))]
  [("entryKey","Entry")
  ,("entryTimestamp","date")
+ ,("entityKey","Entity")
+ ,("entityName","string")
+ ,("entityEntryEntity_entryKey","Entry")
  ,("eventKey","Event")
  ,("eventTimestamp","string")
  ,("eventEntryEvent_entryKey","Entry")
