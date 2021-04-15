@@ -1,4 +1,4 @@
-SQLParserInfoType.PInfo "/home/ubuntu/test_cypm_project/src/Arf.sqlite" "arf"
+SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
  [(("Entry","entry","Circumference")
   ,SQLParserInfoType.OnetoN "Circumference_entry")
  ,(("Circumference","circumference","Entry")
@@ -73,7 +73,7 @@ SQLParserInfoType.PInfo "/home/ubuntu/test_cypm_project/src/Arf.sqlite" "arf"
  ,("entityName","string")
  ,("entityEntryEntity_entryKey","Entry")
  ,("eventKey","Event")
- ,("eventTimestamp","string")
+ ,("eventTimestamp","date")
  ,("eventEntryEvent_entryKey","Entry")
  ,("attributeKey","Attribute")
  ,("attributeEntryAttribute_entryKey","Entry")

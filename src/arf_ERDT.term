@@ -1,4 +1,4 @@
-{- ERD specification transformed from /home/ubuntu/test_cypm_project/src/arf.erdterm -}
+{- ERD specification transformed from /home/ubuntu/arf-backend/src/arf.erdterm -}
 
  ERD "arf"
    [Entity "Entry"
@@ -10,7 +10,7 @@
             Attribute "EntryEntity_entryKey" (KeyDom "Entry") Unique False],
     Entity "Event"
            [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "Timestamp" (StringDom Nothing) NoKey False,
+            Attribute "Timestamp" (DateDom Nothing) NoKey False,
             Attribute "EntryEvent_entryKey" (KeyDom "Entry") Unique False],
     Entity "Attribute"
            [Attribute "Key" (IntDom Nothing) PKey False,

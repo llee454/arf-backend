@@ -7,7 +7,7 @@ arf =
    [
      Entity "Entry" [Attribute "Timestamp" (DateDom Nothing) NoKey False],
      Entity "Entity" [Attribute "Name" (StringDom Nothing) NoKey False],
-     Entity "Event" [Attribute "Timestamp" (StringDom Nothing) NoKey False],
+     Entity "Event" [Attribute "Timestamp" (DateDom Nothing) NoKey False],
      Entity "Attribute" [],
      Entity "Action" [],
      Entity "Activity" [],

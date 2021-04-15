@@ -1,9 +1,10 @@
-{-# OPTIONS_CYMAKE -F --pgmF=currypp --optF=foreigncode #-}
 --- Defines the insert, update, and delete operations for the Base database types.
 
 module Base where
 
+import Float
 import Time
+import Env
 
 import Database.CDBI.ER
 import Database.CDBI.Criteria
@@ -12,42 +13,26 @@ import Database.CDBI.Description
 
 import arf
 
-data Entity = Entity { key :: Maybe Int, created :: ClockTime, name :: String }
+--- Runs the given database action. If an error occurs, ends and returns the
+--- given error message; otherwise, passes the result to the given function.
+run :: DBAction a -> (String -> String) -> (a -> Env -> IO ()) -> Env -> IO ()
+run action err cont env = do
+  res <- runDBAction action (Env.connection env)
+  case res of
+    Left (DBError _ emsg) -> endWithError (err emsg) env
+    Right x -> cont x env
 
---- Inserts an entity into the database.
---- @return the inserted entity with the key set.
-insert :: Entity -> DBAction Entity
-insert x@(Entity Nothing created name) =
-  runInTransaction $
-    arf.newEntry created >+=
-    (\(arf.Entry (EntryID k) created) ->
-      arf.newEntityWithEntryEntity_entryKey name (EntryID k) >+
-      returnDB (Right (x {key = Just k})))
+--- Accepts a string that represents a unix timestamp and attempts to convert
+--- this into a clock timAccepts a string that represents a unix timestamp and
+--- attempts to convert this into a clock time.
+--- Note: this fails 
+clockTimeOfString :: String -> ClockTime
+clockTimeOfString s = read $ "(CTime " ++ s ++ ")"
 
---- Accepts an Entity ID and reads the associated Entity.
-read :: Int -> DBAction (Maybe Entity)
-read k =
-  select 
-    "SELECT Entry.Timestamp, Entity.Name FROM Entry INNER JOIN Entity On Entity.EntryEntity_entryKey = Entry.Key WHERE Entry.Key = '?';"
-    [SQLInt k] [SQLTypeDate, SQLTypeString] >+= from
-  where
-    from :: [[SQLValue]] -> DBAction (Maybe Entity)
-    from res =
-      case res of
-        [[SQLDate created, SQLString name]] -> returnDB $ Right $ Just $ Entity (Just k) created name
-        [] -> returnDB $ Right Nothing
-        _  -> error "Error: An error occured while trying to read an Entity from the SQLite database."
+---
+clockTimeOfNum :: Float -> ClockTime
+clockTimeOfNum = clockTimeOfString . show . truncate
 
---- Accepts ane entity and updates the associated database tables.
-update :: Entity -> DBAction ()
-update (Entity (Just k) created name) =
-  runInTransaction $
-    execute "UPDATE Entity SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
-    execute "UPDATE Entry  SET Name = '?' WHERE EntryEntity_entryKey = '?';" [SQLString name, SQLInt k]
-
---- Accepts an Entity ID and deletes the associated entity.
-delete :: Int -> DBAction ()
-delete k =
-  runInTransaction $
-    execute "DELETE FROM Entity WHERE Key = '?';" [SQLInt k] >+
-    execute "DELETE FROM Entry  WHERE EntryEntity_entryKey = '?';" [SQLInt k]
+---
+clockTimeToNum :: ClockTime -> Float
+clockTimeToNum = i2f . clockTimeToInt

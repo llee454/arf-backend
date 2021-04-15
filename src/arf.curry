@@ -1,6 +1,6 @@
 --- This file has been generated from
 --- 
----     /home/ubuntu/test_cypm_project/src/arf.erdterm
+---     /home/ubuntu/arf-backend/src/arf.erdterm
 --- 
 --- and contains definitions for all entities and relations
 --- specified in this model.
@@ -25,7 +25,7 @@ data Entity = Entity EntityID String EntryID
 data EntityID = EntityID Int
  deriving (Eq,Show,Read)
 
-data Event = Event EventID String EntryID
+data Event = Event EventID Time.ClockTime EntryID
  deriving (Eq,Show,Read)
 
 data EventID = EventID Int
@@ -337,18 +337,18 @@ event_CDBI_Description :: Database.CDBI.Description.EntityDescription Event
 event_CDBI_Description =
   Database.CDBI.Description.ED "Event"
    [Database.CDBI.Connection.SQLTypeInt
-   ,Database.CDBI.Connection.SQLTypeString
+   ,Database.CDBI.Connection.SQLTypeDate
    ,Database.CDBI.Connection.SQLTypeInt]
    (\(Event (EventID key) timestamp (EntryID entryEvent_entryKey)) ->
      [Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLString timestamp
+     ,Database.CDBI.Connection.SQLDate timestamp
      ,Database.CDBI.Connection.SQLInt entryEvent_entryKey])
    (\(Event _ timestamp (EntryID entryEvent_entryKey)) ->
      [Database.CDBI.Connection.SQLNull
-     ,Database.CDBI.Connection.SQLString timestamp
+     ,Database.CDBI.Connection.SQLDate timestamp
      ,Database.CDBI.Connection.SQLInt entryEvent_entryKey])
    (\[Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLString timestamp
+     ,Database.CDBI.Connection.SQLDate timestamp
      ,Database.CDBI.Connection.SQLInt entryEvent_entryKey] ->
      Event (EventID key) timestamp (EntryID entryEvent_entryKey))
 
@@ -361,7 +361,7 @@ eventColumnKey :: Database.CDBI.Description.Column EventID
 eventColumnKey = Database.CDBI.Description.Column "\"Key\"" "\"Event\".\"Key\""
 
 --- The database column `Timestamp` of the `Event` entity.
-eventColumnTimestamp :: Database.CDBI.Description.Column String
+eventColumnTimestamp :: Database.CDBI.Description.Column Time.ClockTime
 eventColumnTimestamp =
   Database.CDBI.Description.Column "\"Timestamp\"" "\"Event\".\"Timestamp\""
 
@@ -380,12 +380,13 @@ eventKeyColDesc =
    (\(Database.CDBI.Connection.SQLInt key) -> EventID key)
 
 --- The description of the database column `Timestamp` of the `Event` entity.
-eventTimestampColDesc :: Database.CDBI.Description.ColumnDescription String
+eventTimestampColDesc
+  :: Database.CDBI.Description.ColumnDescription Time.ClockTime
 eventTimestampColDesc =
   Database.CDBI.Description.ColDesc "\"Event\".\"Timestamp\""
-   Database.CDBI.Connection.SQLTypeString
-   (\timestamp -> Database.CDBI.Connection.SQLString timestamp)
-   (\(Database.CDBI.Connection.SQLString timestamp) -> timestamp)
+   Database.CDBI.Connection.SQLTypeDate
+   (\timestamp -> Database.CDBI.Connection.SQLDate timestamp)
+   (\(Database.CDBI.Connection.SQLDate timestamp) -> timestamp)
 
 --- The description of the database column `EntryEvent_entryKey` of the `Event` entity.
 eventEntryEvent_entryKeyColDesc
@@ -403,7 +404,7 @@ eventKey :: Event -> EventID
 eventKey (Event a _ _) = a
 
 --- Gets the attribute `Timestamp` of the `Event` entity.
-eventTimestamp :: Event -> String
+eventTimestamp :: Event -> Time.ClockTime
 eventTimestamp (Event _ a _) = a
 
 --- Gets the attribute `EntryEvent_entryKey` of the `Event` entity.
@@ -415,7 +416,7 @@ setEventKey :: Event -> EventID -> Event
 setEventKey (Event _ b2 b1) a = Event a b2 b1
 
 --- Sets the attribute `Timestamp` of the `Event` entity.
-setEventTimestamp :: Event -> String -> Event
+setEventTimestamp :: Event -> Time.ClockTime -> Event
 setEventTimestamp (Event a2 _ b1) a = Event a2 a b1
 
 --- Sets the attribute `EntryEvent_entryKey` of the `Event` entity.
@@ -458,7 +459,7 @@ getEvent =
 
 --- Inserts a new `Event` entity.
 newEventWithEntryEvent_entryKey
-  :: String -> EntryID -> Database.CDBI.Connection.DBAction Event
+  :: Time.ClockTime -> EntryID -> Database.CDBI.Connection.DBAction Event
 newEventWithEntryEvent_entryKey timestamp_p entryEvent_entryKey_p =
   Database.CDBI.ER.insertNewEntry event_CDBI_Description setEventKey EventID
    (Event (EventID 0) timestamp_p entryEvent_entryKey_p)

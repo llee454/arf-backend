@@ -12,11 +12,12 @@ import Database.CDBI.Criteria
 import Database.CDBI.Connection
 import Database.CDBI.Description
 
+import Base
 import Env
 import URL
 import arf
-import Base
-
+import Entity
+import Event
 
 main :: IO ()
 main = Env.init >>= route
@@ -26,6 +27,7 @@ handlers :: [(String, [String] -> Env -> IO ())]
 handlers = [
     ("status",  const (reply "Available")),
     ("version", const (reply "1.0.0")),
+    ("event",   Event.handler),
     ("demo",    demo)
   ]
 
@@ -38,30 +40,21 @@ route env = do
     Just [] -> endWithError "Error: Invalid request. No endpoint selected." env
     Just (path : args) ->
       case lookup path handlers of
-      Nothing      -> endWithError "Error: Invalid request. Unrecognized endpoint." env
+      Nothing      -> endWithError ("Error: Invalid request. Unrecognized endpoint. Path: " ++ show path ++ " Args: " ++ show args) env
       Just handler -> handler args env
-
---- Runs the given database action. If an error occurs, ends and returns the
---- given error message; otherwise, passes the result to the given function.
-run :: DBAction a -> (String -> String) -> (a -> Env -> IO ()) -> Env -> IO ()
-run action err cont env = do
-  res <- runDBAction action (Env.connection env)
-  case res of
-    Left (DBError _ emsg) -> endWithError (err emsg) env
-    Right x -> cont x env
 
 --- Handles demo requests.
 demo :: [String] -> Env -> IO ()
 demo _ env = do
   currTime <- getClockTime
-  run (Base.insert $ Base.Entity Nothing currTime "example")
+  run (Entity.insert $ Entity.Entity Nothing currTime "example")
     ("Error: An error occured while trying to insert the demo data: " ++)
-    (\(Base.Entity (Just k) _ _) ->
-      run (Base.read k)
+    (\(Entity.Entity (Just k) _ _) ->
+      run (Entity.read k)
         ("Error: An error occured while trying to read the demo data: " ++)
-        (\entity env -> do
+        (\_ env -> do
           write ("Inserted entity with key: " ++ show k ++ "\n") env
-          _ <- runDBAction (Base.delete k) (Env.connection env)
+          _ <- runDBAction (Entity.delete k) (Env.connection env)
           write "Disconnected from the SQLite Database.\n" env
           end env))
     env
