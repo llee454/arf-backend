@@ -14,6 +14,8 @@ import Database.CDBI.Criteria
 import Database.CDBI.Connection
 import Database.CDBI.Description
 
+import EntityIntf
+import JSONExt
 import Base
 import Env
 import arf
@@ -28,12 +30,17 @@ data Entity = Entity { key :: Maybe Int, created :: ClockTime, name :: String }
 ofJSON :: JValue -> Maybe Entity
 ofJSON json =
   case json of
-    (JObject [("key", k), ("created", JString created), ("name", JString name)]) ->
-      case k of
-        JNumber x -> Just $ Entity (Just $ truncate x) (clockTimeOfString created) name
-        JNull     -> Just $ Entity Nothing (clockTimeOfString created) name
-        _         -> Nothing
+    (JObject [("key", k), ("created", JNumber created), ("name", JString name)]) ->
+      maybeIntOfJSON k >>- \x -> Just $ Entity x (clockTimeOfNum created) name
     _ -> Nothing
+
+---
+toJSON :: Entity -> JValue
+toJSON (Entity k created name) =
+  JObject [
+   ("key",     maybeIntToJSON k),
+   ("created", clockTimeToJSON created),
+   ("name",    JString name)]
 
 --- Inserts an entity into the database.
 --- @return the inserted entity with the key set.
@@ -75,17 +82,18 @@ delete k =
     execute "DELETE FROM Entity WHERE Key = '?';" [SQLInt k] >+
     execute "DELETE FROM Entry  WHERE EntryEntity_entryKey = '?';" [SQLInt k]
 
+entityIntf :: EntityIntf Entity
+entityIntf = EntityIntf {
+  name_   = "entity",
+  key_    = key,
+  ofJSON_ = ofJSON,
+  toJSON_ = toJSON,
+  insert_ = insert,
+  read_   = read,
+  update_ = update,
+  delete_ = delete
+}
+
 --- 
 handler :: [String] -> Env -> IO ()
-handler args env =
-  case args of
-    ["create"] -> do
-      req <- getContents
-      case parseJSON req >>- ofJSON of
-        Nothing    -> endWithError "Error: Invalid request. The given request is not valid JSON." env
-        Just entity ->
-          run (insert entity)
-            ("Error: An error occured while trying to insert an entity into the database. " ++)
-            (const Env.end)
-            env
-    _ -> endWithError "Error: Invalid request." env
+handler = EntityIntf.handler entityIntf

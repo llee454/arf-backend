@@ -5,6 +5,7 @@ module Base where
 import Float
 import Time
 import Env
+import JSON.Data
 
 import Database.CDBI.ER
 import Database.CDBI.Criteria
@@ -21,18 +22,3 @@ run action err cont env = do
   case res of
     Left (DBError _ emsg) -> endWithError (err emsg) env
     Right x -> cont x env
-
---- Accepts a string that represents a unix timestamp and attempts to convert
---- this into a clock timAccepts a string that represents a unix timestamp and
---- attempts to convert this into a clock time.
---- Note: this fails 
-clockTimeOfString :: String -> ClockTime
-clockTimeOfString s = read $ "(CTime " ++ s ++ ")"
-
----
-clockTimeOfNum :: Float -> ClockTime
-clockTimeOfNum = clockTimeOfString . show . truncate
-
----
-clockTimeToNum :: ClockTime -> Float
-clockTimeToNum = i2f . clockTimeToInt

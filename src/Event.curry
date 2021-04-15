@@ -15,6 +15,8 @@ import Database.CDBI.Criteria
 import Database.CDBI.Connection
 import Database.CDBI.Description
 
+import EntityIntf
+import JSONExt
 import Base
 import Env
 import arf
@@ -30,19 +32,16 @@ ofJSON :: JValue -> Maybe Event
 ofJSON json =
   case json of
     (JObject [("key", k), ("created", JNumber created), ("timestamp", JNumber timestamp)]) ->
-      case k of
-        JNumber x -> Just $ Event (Just $ truncate x) (clockTimeOfNum created) (clockTimeOfNum timestamp)
-        JNull     -> Just $ Event Nothing (clockTimeOfNum created) (clockTimeOfNum timestamp)
-        _         -> Nothing
+      maybeIntOfJSON k >>- \x -> Just $ Event x (clockTimeOfNum created) (clockTimeOfNum timestamp)
     _ -> Nothing
 
 ---
 toJSON :: Event -> JValue
 toJSON (Event k created timestamp) =
   JObject [
-    ("key", case k of Nothing -> JNull; Just j -> JNumber (i2f j)),
-    ("created", JNumber $ clockTimeToNum created),
-    ("timestamp", JNumber $ clockTimeToNum timestamp)]
+    ("key",       maybeIntToJSON k),
+    ("created",   clockTimeToJSON created),
+    ("timestamp", clockTimeToJSON timestamp)]
 
 --- Inserts an event into the database.
 --- @return the inserted event with the key set.
@@ -88,36 +87,18 @@ delete k =
     execute "DELETE FROM Entity WHERE Key = '?';" [SQLInt k] >+
     execute "DELETE FROM Event  WHERE EntryEvent_entryKey = '?';" [SQLInt k]
 
+entityIntf :: EntityIntf Event
+entityIntf = EntityIntf {
+  name_   = "event",
+  key_    = key,
+  ofJSON_ = ofJSON,
+  toJSON_ = toJSON,
+  insert_ = insert,
+  read_   = read,
+  update_ = update,
+  delete_ = delete
+}
+
 --- 
 handler :: [String] -> Env -> IO ()
-handler args env = do
-  req <- getContents
-  let json = parseJSON req
-    in case (args, json, json >>- ofJSON) of
-      (["create"], _, Just event) ->
-        run (insert event)
-          ("Error: An error occured while trying to insert an event into the database. " ++)
-          (\event -> Env.reply $ ppJSON $ JObject [
-            ("id", case (key event) of
-                     Nothing -> JNull;
-                     Just k -> JNumber (i2f k))])
-          env
-      (["read", k], _, _) ->
-        run (read (Prelude.read k :: Int))
-          ("Error: An error occured while trying to read an event into the database. " ++)
-          (\event -> Env.reply $ ppJSON $
-            case event of
-              Nothing -> JNull;
-              Just e -> JObject [("event", toJSON e)])
-          env
-      (["update"], _, Just event) ->
-        run (update event)
-          ("Error: An error occured while trying to update an event into the database. " ++)
-          (const $ Env.end)
-          env
-      (["delete", k], _, _) ->
-        run (delete (Prelude.read k :: Int))
-          ("Error: An error occured while trying to delete an event from the database. " ++)
-          (const $ Env.end)
-          env
-      _ -> endWithError ("Error: Invalid request. JSON: " ++ show json) env
+handler = EntityIntf.handler entityIntf

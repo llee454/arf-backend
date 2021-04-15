@@ -27,6 +27,7 @@ handlers :: [(String, [String] -> Env -> IO ())]
 handlers = [
     ("status",  const (reply "Available")),
     ("version", const (reply "1.0.0")),
+    ("entity",  Entity.handler),
     ("event",   Event.handler),
     ("demo",    demo)
   ]
