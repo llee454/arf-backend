@@ -18,6 +18,7 @@ import URL
 import arf
 import Entity
 import Event
+import Attribute
 
 main :: IO ()
 main = Env.init >>= route
@@ -25,11 +26,11 @@ main = Env.init >>= route
 --- Registers the request handlers.
 handlers :: [(String, [String] -> Env -> IO ())]
 handlers = [
-    ("status",  const (reply "Available")),
-    ("version", const (reply "1.0.0")),
-    ("entity",  Entity.handler),
-    ("event",   Event.handler),
-    ("demo",    demo)
+    ("status",    const (reply "Available")),
+    ("version",   const (reply "1.0.0")),
+    ("entity",    Entity.handler),
+    ("event",     Event.handler),
+    ("attribute", Attribute.handler)
   ]
 
 --- Routes the incoming request to the appropriate handler.
@@ -43,19 +44,3 @@ route env = do
       case lookup path handlers of
       Nothing      -> endWithError ("Error: Invalid request. Unrecognized endpoint. Path: " ++ show path ++ " Args: " ++ show args) env
       Just handler -> handler args env
-
---- Handles demo requests.
-demo :: [String] -> Env -> IO ()
-demo _ env = do
-  currTime <- getClockTime
-  run (Entity.insert $ Entity.Entity Nothing currTime "example")
-    ("Error: An error occured while trying to insert the demo data: " ++)
-    (\(Entity.Entity (Just k) _ _) ->
-      run (Entity.read k)
-        ("Error: An error occured while trying to read the demo data: " ++)
-        (\_ env -> do
-          write ("Inserted entity with key: " ++ show k ++ "\n") env
-          _ <- runDBAction (Entity.delete k) (Env.connection env)
-          write "Disconnected from the SQLite Database.\n" env
-          end env))
-    env

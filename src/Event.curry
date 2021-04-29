@@ -79,7 +79,6 @@ update x =
         execute "UPDATE Event  SET Name = '?' WHERE EntryEvent_entryKey = '?';" [SQLDate timestamp, SQLInt k]
     _ -> failDB $ DBError UnknownError "Error: An error occured while trying to update an event."
 
-
 --- Accepts an Event ID and deletes the associated event.
 delete :: Int -> DBAction ()
 delete k =

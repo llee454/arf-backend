@@ -31,13 +31,13 @@ data Event = Event EventID Time.ClockTime EntryID
 data EventID = EventID Int
  deriving (Eq,Show,Read)
 
-data Attribute = Attribute AttributeID EntryID
+data Attrib = Attrib AttribID EntryID EntryID
  deriving (Eq,Show,Read)
 
-data AttributeID = AttributeID Int
+data AttribID = AttribID Int
  deriving (Eq,Show,Read)
 
-data Action = Action ActionID EntryID
+data Action = Action ActionID EntryID EntryID
  deriving (Eq,Show,Read)
 
 data ActionID = ActionID Int
@@ -474,142 +474,184 @@ deleteEvent =
 updateEvent :: Event -> Database.CDBI.Connection.DBAction ()
 updateEvent = Database.CDBI.ER.updateEntry event_CDBI_Description
 
---- The ER description of the `Attribute` entity.
-attribute_CDBI_Description
-  :: Database.CDBI.Description.EntityDescription Attribute
-attribute_CDBI_Description =
-  Database.CDBI.Description.ED "Attribute"
-   [Database.CDBI.Connection.SQLTypeInt,Database.CDBI.Connection.SQLTypeInt]
-   (\(Attribute (AttributeID key) (EntryID entryAttribute_entryKey)) ->
+--- The ER description of the `Attrib` entity.
+attrib_CDBI_Description :: Database.CDBI.Description.EntityDescription Attrib
+attrib_CDBI_Description =
+  Database.CDBI.Description.ED "Attrib"
+   [Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeInt]
+   (\(Attrib
+       (AttribID key)
+       (EntryID entryAttrib_entryKey)
+       (EntryID entryAttrib_subjectKey)) ->
      [Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLInt entryAttribute_entryKey])
-   (\(Attribute _ (EntryID entryAttribute_entryKey)) ->
+     ,Database.CDBI.Connection.SQLInt entryAttrib_entryKey
+     ,Database.CDBI.Connection.SQLInt entryAttrib_subjectKey])
+   (\(Attrib
+       _ (EntryID entryAttrib_entryKey) (EntryID entryAttrib_subjectKey)) ->
      [Database.CDBI.Connection.SQLNull
-     ,Database.CDBI.Connection.SQLInt entryAttribute_entryKey])
+     ,Database.CDBI.Connection.SQLInt entryAttrib_entryKey
+     ,Database.CDBI.Connection.SQLInt entryAttrib_subjectKey])
    (\[Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLInt entryAttribute_entryKey] ->
-     Attribute (AttributeID key) (EntryID entryAttribute_entryKey))
+     ,Database.CDBI.Connection.SQLInt entryAttrib_entryKey
+     ,Database.CDBI.Connection.SQLInt entryAttrib_subjectKey] ->
+     Attrib (AttribID key) (EntryID entryAttrib_entryKey)
+      (EntryID entryAttrib_subjectKey))
 
---- The database table of the `Attribute` entity.
-attributeTable :: Database.CDBI.Description.Table
-attributeTable = "Attribute"
+--- The database table of the `Attrib` entity.
+attribTable :: Database.CDBI.Description.Table
+attribTable = "Attrib"
 
---- The database column `Key` of the `Attribute` entity.
-attributeColumnKey :: Database.CDBI.Description.Column AttributeID
-attributeColumnKey =
-  Database.CDBI.Description.Column "\"Key\"" "\"Attribute\".\"Key\""
+--- The database column `Key` of the `Attrib` entity.
+attribColumnKey :: Database.CDBI.Description.Column AttribID
+attribColumnKey =
+  Database.CDBI.Description.Column "\"Key\"" "\"Attrib\".\"Key\""
 
---- The database column `EntryAttribute_entryKey` of the `Attribute` entity.
-attributeColumnEntryAttribute_entryKey
-  :: Database.CDBI.Description.Column EntryID
-attributeColumnEntryAttribute_entryKey =
-  Database.CDBI.Description.Column "\"EntryAttribute_entryKey\""
-   "\"Attribute\".\"EntryAttribute_entryKey\""
+--- The database column `EntryAttrib_entryKey` of the `Attrib` entity.
+attribColumnEntryAttrib_entryKey :: Database.CDBI.Description.Column EntryID
+attribColumnEntryAttrib_entryKey =
+  Database.CDBI.Description.Column "\"EntryAttrib_entryKey\""
+   "\"Attrib\".\"EntryAttrib_entryKey\""
 
---- The description of the database column `Key` of the `Attribute` entity.
-attributeKeyColDesc :: Database.CDBI.Description.ColumnDescription AttributeID
-attributeKeyColDesc =
-  Database.CDBI.Description.ColDesc "\"Attribute\".\"Key\""
+--- The database column `EntryAttrib_subjectKey` of the `Attrib` entity.
+attribColumnEntryAttrib_subjectKey :: Database.CDBI.Description.Column EntryID
+attribColumnEntryAttrib_subjectKey =
+  Database.CDBI.Description.Column "\"EntryAttrib_subjectKey\""
+   "\"Attrib\".\"EntryAttrib_subjectKey\""
+
+--- The description of the database column `Key` of the `Attrib` entity.
+attribKeyColDesc :: Database.CDBI.Description.ColumnDescription AttribID
+attribKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Attrib\".\"Key\""
    Database.CDBI.Connection.SQLTypeInt
-   (\(AttributeID key) -> Database.CDBI.Connection.SQLInt key)
-   (\(Database.CDBI.Connection.SQLInt key) -> AttributeID key)
+   (\(AttribID key) -> Database.CDBI.Connection.SQLInt key)
+   (\(Database.CDBI.Connection.SQLInt key) -> AttribID key)
 
---- The description of the database column `EntryAttribute_entryKey` of the `Attribute` entity.
-attributeEntryAttribute_entryKeyColDesc
+--- The description of the database column `EntryAttrib_entryKey` of the `Attrib` entity.
+attribEntryAttrib_entryKeyColDesc
   :: Database.CDBI.Description.ColumnDescription EntryID
-attributeEntryAttribute_entryKeyColDesc =
-  Database.CDBI.Description.ColDesc "\"Attribute\".\"EntryAttribute_entryKey\""
+attribEntryAttrib_entryKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Attrib\".\"EntryAttrib_entryKey\""
    Database.CDBI.Connection.SQLTypeInt
-   (\(EntryID entryAttribute_entryKey) ->
-     Database.CDBI.Connection.SQLInt entryAttribute_entryKey)
-   (\(Database.CDBI.Connection.SQLInt entryAttribute_entryKey) ->
-     EntryID entryAttribute_entryKey)
+   (\(EntryID entryAttrib_entryKey) ->
+     Database.CDBI.Connection.SQLInt entryAttrib_entryKey)
+   (\(Database.CDBI.Connection.SQLInt entryAttrib_entryKey) ->
+     EntryID entryAttrib_entryKey)
 
---- Gets the attribute `Key` of the `Attribute` entity.
-attributeKey :: Attribute -> AttributeID
-attributeKey (Attribute a _) = a
+--- The description of the database column `EntryAttrib_subjectKey` of the `Attrib` entity.
+attribEntryAttrib_subjectKeyColDesc
+  :: Database.CDBI.Description.ColumnDescription EntryID
+attribEntryAttrib_subjectKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Attrib\".\"EntryAttrib_subjectKey\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\(EntryID entryAttrib_subjectKey) ->
+     Database.CDBI.Connection.SQLInt entryAttrib_subjectKey)
+   (\(Database.CDBI.Connection.SQLInt entryAttrib_subjectKey) ->
+     EntryID entryAttrib_subjectKey)
 
---- Gets the attribute `EntryAttribute_entryKey` of the `Attribute` entity.
-attributeEntryAttribute_entryKey :: Attribute -> EntryID
-attributeEntryAttribute_entryKey (Attribute _ a) = a
+--- Gets the attribute `Key` of the `Attrib` entity.
+attribKey :: Attrib -> AttribID
+attribKey (Attrib a _ _) = a
 
---- Sets the attribute `Key` of the `Attribute` entity.
-setAttributeKey :: Attribute -> AttributeID -> Attribute
-setAttributeKey (Attribute _ b1) a = Attribute a b1
+--- Gets the attribute `EntryAttrib_entryKey` of the `Attrib` entity.
+attribEntryAttrib_entryKey :: Attrib -> EntryID
+attribEntryAttrib_entryKey (Attrib _ a _) = a
 
---- Sets the attribute `EntryAttribute_entryKey` of the `Attribute` entity.
-setAttributeEntryAttribute_entryKey :: Attribute -> EntryID -> Attribute
-setAttributeEntryAttribute_entryKey (Attribute a2 _) a = Attribute a2 a
+--- Gets the attribute `EntryAttrib_subjectKey` of the `Attrib` entity.
+attribEntryAttrib_subjectKey :: Attrib -> EntryID
+attribEntryAttrib_subjectKey (Attrib _ _ a) = a
 
---- id-to-value function for entity `Attribute`.
-attributeID :: AttributeID -> Database.CDBI.Criteria.Value AttributeID
-attributeID (AttributeID key) = Database.CDBI.Criteria.idVal key
+--- Sets the attribute `Key` of the `Attrib` entity.
+setAttribKey :: Attrib -> AttribID -> Attrib
+setAttribKey (Attrib _ b2 b1) a = Attrib a b2 b1
 
---- id-to-int function for entity `Attribute`.
-attributeKeyToInt :: AttributeID -> Int
-attributeKeyToInt (AttributeID key) = key
+--- Sets the attribute `EntryAttrib_entryKey` of the `Attrib` entity.
+setAttribEntryAttrib_entryKey :: Attrib -> EntryID -> Attrib
+setAttribEntryAttrib_entryKey (Attrib a2 _ b1) a = Attrib a2 a b1
 
---- Shows the key of a `Attribute` entity as a string.
+--- Sets the attribute `EntryAttrib_subjectKey` of the `Attrib` entity.
+setAttribEntryAttrib_subjectKey :: Attrib -> EntryID -> Attrib
+setAttribEntryAttrib_subjectKey (Attrib a3 a2 _) a = Attrib a3 a2 a
+
+--- id-to-value function for entity `Attrib`.
+attribID :: AttribID -> Database.CDBI.Criteria.Value AttribID
+attribID (AttribID key) = Database.CDBI.Criteria.idVal key
+
+--- id-to-int function for entity `Attrib`.
+attribKeyToInt :: AttribID -> Int
+attribKeyToInt (AttribID key) = key
+
+--- Shows the key of a `Attrib` entity as a string.
 --- This is useful if a textual representation of the key is necessary
 --- (e.g., as URL parameters in web pages), but it should no be used
 --- to store keys in other attributes!
-showAttributeKey :: Attribute -> String
-showAttributeKey entry =
-  Database.CDBI.ER.showDatabaseKey "Attribute" attributeKeyToInt
-   (attributeKey entry)
+showAttribKey :: Attrib -> String
+showAttribKey entry =
+  Database.CDBI.ER.showDatabaseKey "Attrib" attribKeyToInt (attribKey entry)
 
---- Transforms a string into a key of a `Attribute` entity.
+--- Transforms a string into a key of a `Attrib` entity.
 --- Nothing is returned if the string does not represent a meaningful key.
-readAttributeKey :: String -> Maybe AttributeID
-readAttributeKey = Database.CDBI.ER.readDatabaseKey "Attribute" AttributeID
+readAttribKey :: String -> Maybe AttribID
+readAttribKey = Database.CDBI.ER.readDatabaseKey "Attrib" AttribID
 
---- Gets all `Attribute` entities.
-queryAllAttributes :: Database.CDBI.Connection.DBAction [Attribute]
-queryAllAttributes = Database.CDBI.ER.getAllEntries attribute_CDBI_Description
+--- Gets all `Attrib` entities.
+queryAllAttribs :: Database.CDBI.Connection.DBAction [Attrib]
+queryAllAttribs = Database.CDBI.ER.getAllEntries attrib_CDBI_Description
 
---- Gets all `Attribute` entities satisfying a given predicate.
-queryCondAttribute
-  :: (Attribute -> Bool) -> Database.CDBI.Connection.DBAction [Attribute]
-queryCondAttribute = Database.CDBI.ER.getCondEntries attribute_CDBI_Description
+--- Gets all `Attrib` entities satisfying a given predicate.
+queryCondAttrib
+  :: (Attrib -> Bool) -> Database.CDBI.Connection.DBAction [Attrib]
+queryCondAttrib = Database.CDBI.ER.getCondEntries attrib_CDBI_Description
 
---- Gets a `Attribute` entry by a given key.
-getAttribute :: AttributeID -> Database.CDBI.Connection.DBAction Attribute
-getAttribute =
-  Database.CDBI.ER.getEntryWithKey attribute_CDBI_Description attributeColumnKey
-   attributeID
+--- Gets a `Attrib` entry by a given key.
+getAttrib :: AttribID -> Database.CDBI.Connection.DBAction Attrib
+getAttrib =
+  Database.CDBI.ER.getEntryWithKey attrib_CDBI_Description attribColumnKey
+   attribID
 
---- Inserts a new `Attribute` entity.
-newAttributeWithEntryAttribute_entryKey
-  :: EntryID -> Database.CDBI.Connection.DBAction Attribute
-newAttributeWithEntryAttribute_entryKey entryAttribute_entryKey_p =
-  Database.CDBI.ER.insertNewEntry attribute_CDBI_Description setAttributeKey
-   AttributeID
-   (Attribute (AttributeID 0) entryAttribute_entryKey_p)
+--- Inserts a new `Attrib` entity.
+newAttribWithEntryAttrib_entryKeyWithEntryAttrib_subjectKey
+  :: EntryID -> EntryID -> Database.CDBI.Connection.DBAction Attrib
+newAttribWithEntryAttrib_entryKeyWithEntryAttrib_subjectKey
+    entryAttrib_entryKey_p entryAttrib_subjectKey_p =
+  Database.CDBI.ER.insertNewEntry attrib_CDBI_Description setAttribKey AttribID
+   (Attrib (AttribID 0) entryAttrib_entryKey_p entryAttrib_subjectKey_p)
 
---- Deletes an existing `Attribute` entry by its key.
-deleteAttribute :: Attribute -> Database.CDBI.Connection.DBAction ()
-deleteAttribute =
-  Database.CDBI.ER.deleteEntry attribute_CDBI_Description attributeColumnKey
-   (attributeID . attributeKey)
+--- Deletes an existing `Attrib` entry by its key.
+deleteAttrib :: Attrib -> Database.CDBI.Connection.DBAction ()
+deleteAttrib =
+  Database.CDBI.ER.deleteEntry attrib_CDBI_Description attribColumnKey
+   (attribID . attribKey)
 
---- Updates an existing `Attribute` entry by its key.
-updateAttribute :: Attribute -> Database.CDBI.Connection.DBAction ()
-updateAttribute = Database.CDBI.ER.updateEntry attribute_CDBI_Description
+--- Updates an existing `Attrib` entry by its key.
+updateAttrib :: Attrib -> Database.CDBI.Connection.DBAction ()
+updateAttrib = Database.CDBI.ER.updateEntry attrib_CDBI_Description
 
 --- The ER description of the `Action` entity.
 action_CDBI_Description :: Database.CDBI.Description.EntityDescription Action
 action_CDBI_Description =
   Database.CDBI.Description.ED "Action"
-   [Database.CDBI.Connection.SQLTypeInt,Database.CDBI.Connection.SQLTypeInt]
-   (\(Action (ActionID key) (EntryID entryAction_entryKey)) ->
+   [Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeInt]
+   (\(Action
+       (ActionID key)
+       (EntryID entryAction_entryKey)
+       (EntryID entryAction_subjectKey)) ->
      [Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLInt entryAction_entryKey])
-   (\(Action _ (EntryID entryAction_entryKey)) ->
+     ,Database.CDBI.Connection.SQLInt entryAction_entryKey
+     ,Database.CDBI.Connection.SQLInt entryAction_subjectKey])
+   (\(Action
+       _ (EntryID entryAction_entryKey) (EntryID entryAction_subjectKey)) ->
      [Database.CDBI.Connection.SQLNull
-     ,Database.CDBI.Connection.SQLInt entryAction_entryKey])
+     ,Database.CDBI.Connection.SQLInt entryAction_entryKey
+     ,Database.CDBI.Connection.SQLInt entryAction_subjectKey])
    (\[Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLInt entryAction_entryKey] ->
-     Action (ActionID key) (EntryID entryAction_entryKey))
+     ,Database.CDBI.Connection.SQLInt entryAction_entryKey
+     ,Database.CDBI.Connection.SQLInt entryAction_subjectKey] ->
+     Action (ActionID key) (EntryID entryAction_entryKey)
+      (EntryID entryAction_subjectKey))
 
 --- The database table of the `Action` entity.
 actionTable :: Database.CDBI.Description.Table
@@ -625,6 +667,12 @@ actionColumnEntryAction_entryKey :: Database.CDBI.Description.Column EntryID
 actionColumnEntryAction_entryKey =
   Database.CDBI.Description.Column "\"EntryAction_entryKey\""
    "\"Action\".\"EntryAction_entryKey\""
+
+--- The database column `EntryAction_subjectKey` of the `Action` entity.
+actionColumnEntryAction_subjectKey :: Database.CDBI.Description.Column EntryID
+actionColumnEntryAction_subjectKey =
+  Database.CDBI.Description.Column "\"EntryAction_subjectKey\""
+   "\"Action\".\"EntryAction_subjectKey\""
 
 --- The description of the database column `Key` of the `Action` entity.
 actionKeyColDesc :: Database.CDBI.Description.ColumnDescription ActionID
@@ -645,21 +693,40 @@ actionEntryAction_entryKeyColDesc =
    (\(Database.CDBI.Connection.SQLInt entryAction_entryKey) ->
      EntryID entryAction_entryKey)
 
+--- The description of the database column `EntryAction_subjectKey` of the `Action` entity.
+actionEntryAction_subjectKeyColDesc
+  :: Database.CDBI.Description.ColumnDescription EntryID
+actionEntryAction_subjectKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Action\".\"EntryAction_subjectKey\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\(EntryID entryAction_subjectKey) ->
+     Database.CDBI.Connection.SQLInt entryAction_subjectKey)
+   (\(Database.CDBI.Connection.SQLInt entryAction_subjectKey) ->
+     EntryID entryAction_subjectKey)
+
 --- Gets the attribute `Key` of the `Action` entity.
 actionKey :: Action -> ActionID
-actionKey (Action a _) = a
+actionKey (Action a _ _) = a
 
 --- Gets the attribute `EntryAction_entryKey` of the `Action` entity.
 actionEntryAction_entryKey :: Action -> EntryID
-actionEntryAction_entryKey (Action _ a) = a
+actionEntryAction_entryKey (Action _ a _) = a
+
+--- Gets the attribute `EntryAction_subjectKey` of the `Action` entity.
+actionEntryAction_subjectKey :: Action -> EntryID
+actionEntryAction_subjectKey (Action _ _ a) = a
 
 --- Sets the attribute `Key` of the `Action` entity.
 setActionKey :: Action -> ActionID -> Action
-setActionKey (Action _ b1) a = Action a b1
+setActionKey (Action _ b2 b1) a = Action a b2 b1
 
 --- Sets the attribute `EntryAction_entryKey` of the `Action` entity.
 setActionEntryAction_entryKey :: Action -> EntryID -> Action
-setActionEntryAction_entryKey (Action a2 _) a = Action a2 a
+setActionEntryAction_entryKey (Action a2 _ b1) a = Action a2 a b1
+
+--- Sets the attribute `EntryAction_subjectKey` of the `Action` entity.
+setActionEntryAction_subjectKey :: Action -> EntryID -> Action
+setActionEntryAction_subjectKey (Action a3 a2 _) a = Action a3 a2 a
 
 --- id-to-value function for entity `Action`.
 actionID :: ActionID -> Database.CDBI.Criteria.Value ActionID
@@ -698,11 +765,12 @@ getAction =
    actionID
 
 --- Inserts a new `Action` entity.
-newActionWithEntryAction_entryKey
-  :: EntryID -> Database.CDBI.Connection.DBAction Action
-newActionWithEntryAction_entryKey entryAction_entryKey_p =
+newActionWithEntryAction_entryKeyWithEntryAction_subjectKey
+  :: EntryID -> EntryID -> Database.CDBI.Connection.DBAction Action
+newActionWithEntryAction_entryKeyWithEntryAction_subjectKey
+    entryAction_entryKey_p entryAction_subjectKey_p =
   Database.CDBI.ER.insertNewEntry action_CDBI_Description setActionKey ActionID
-   (Action (ActionID 0) entryAction_entryKey_p)
+   (Action (ActionID 0) entryAction_entryKey_p entryAction_subjectKey_p)
 
 --- Deletes an existing `Action` entry by its key.
 deleteAction :: Action -> Database.CDBI.Connection.DBAction ()
@@ -1494,8 +1562,8 @@ createNewDB dbfile =
        ["create table 'Entry'('Key' integer primary key ,'Timestamp' string not null);"
        ,"create table 'Entity'('Key' integer primary key ,'Name' string not null ,'EntryEntity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Event'('Key' integer primary key ,'Timestamp' string not null ,'EntryEvent_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
-       ,"create table 'Attribute'('Key' integer primary key ,'EntryAttribute_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
-       ,"create table 'Action'('Key' integer primary key ,'EntryAction_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
+       ,"create table 'Attrib'('Key' integer primary key ,'EntryAttrib_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryAttrib_subjectKey' int REFERENCES 'Entry'(Key) not null);"
+       ,"create table 'Action'('Key' integer primary key ,'EntryAction_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryAction_subjectKey' int REFERENCES 'Entry'(Key) not null);"
        ,"create table 'Activity'('Key' integer primary key ,'EntryActivity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Measurement'('Key' integer primary key ,'Unit' string not null ,'Value' float not null ,'Precision' string not null ,'EntryMeasurement_action_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryMeasurement_of_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Duration'('Key' integer primary key ,'EntryDuration_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
@@ -1509,7 +1577,7 @@ saveDBTo dir =
   do Database.CDBI.ER.saveDBTerms entry_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms entity_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms event_CDBI_Description sqliteDBFile dir
-     Database.CDBI.ER.saveDBTerms attribute_CDBI_Description sqliteDBFile dir
+     Database.CDBI.ER.saveDBTerms attrib_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms action_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms activity_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms measurement_CDBI_Description sqliteDBFile dir
@@ -1525,7 +1593,7 @@ restoreDBFrom dir =
   do Database.CDBI.ER.restoreDBTerms entry_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms entity_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms event_CDBI_Description sqliteDBFile dir
-     Database.CDBI.ER.restoreDBTerms attribute_CDBI_Description sqliteDBFile dir
+     Database.CDBI.ER.restoreDBTerms attrib_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms action_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms activity_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms measurement_CDBI_Description sqliteDBFile

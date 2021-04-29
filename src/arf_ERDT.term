@@ -12,12 +12,14 @@
            [Attribute "Key" (IntDom Nothing) PKey False,
             Attribute "Timestamp" (DateDom Nothing) NoKey False,
             Attribute "EntryEvent_entryKey" (KeyDom "Entry") Unique False],
-    Entity "Attribute"
+    Entity "Attrib"
            [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "EntryAttribute_entryKey" (KeyDom "Entry") Unique False],
+            Attribute "EntryAttrib_entryKey" (KeyDom "Entry") Unique False,
+            Attribute "EntryAttrib_subjectKey" (KeyDom "Entry") NoKey False],
     Entity "Action"
            [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "EntryAction_entryKey" (KeyDom "Entry") Unique False],
+            Attribute "EntryAction_entryKey" (KeyDom "Entry") Unique False,
+            Attribute "EntryAction_subjectKey" (KeyDom "Entry") NoKey False],
     Entity "Activity"
            [Attribute "Key" (IntDom Nothing) PKey False,
             Attribute "EntryActivity_entryKey" (KeyDom "Entry") Unique False],
@@ -55,12 +57,18 @@
     Relationship "Activity_entry"
                  [REnd "Activity" "entry" (Between 0 (Max 1)),
                   REnd "Entry" "activity" (Exactly 1)],
+    Relationship "Action_subject"
+                 [REnd "Action" "subject" (Between 0 Infinite),
+                  REnd "Entry" "action_ref" (Exactly 1)],
     Relationship "Action_entry"
                  [REnd "Action" "entry" (Between 0 (Max 1)),
                   REnd "Entry" "action" (Exactly 1)],
-    Relationship "Attribute_entry"
-                 [REnd "Attribute" "entry" (Between 0 (Max 1)),
-                  REnd "Entry" "attribute" (Exactly 1)],
+    Relationship "Attrib_subject"
+                 [REnd "Attrib" "subject" (Between 0 Infinite),
+                  REnd "Entry" "attrib_ref" (Exactly 1)],
+    Relationship "Attrib_entry"
+                 [REnd "Attrib" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "attrib" (Exactly 1)],
     Relationship "Event_entry"
                  [REnd "Event" "entry" (Between 0 (Max 1)),
                   REnd "Entry" "event" (Exactly 1)],

@@ -8,7 +8,7 @@ arf =
      Entity "Entry" [Attribute "Timestamp" (DateDom Nothing) NoKey False],
      Entity "Entity" [Attribute "Name" (StringDom Nothing) NoKey False],
      Entity "Event" [Attribute "Timestamp" (DateDom Nothing) NoKey False],
-     Entity "Attribute" [],
+     Entity "Attrib" [],
      Entity "Action" [],
      Entity "Activity" [],
      Entity "Measurement" [
@@ -26,12 +26,18 @@ arf =
      Relationship "Event_entry" [
        REnd "Event" "entry" (Between 0 (Max 1)),
        REnd "Entry" "event" (Exactly 1)],
-     Relationship "Attribute_entry" [
-       REnd "Attribute" "entry" (Between 0 (Max 1)),
-       REnd "Entry" "attribute" (Exactly 1)],
+     Relationship "Attrib_entry" [
+       REnd "Attrib" "entry" (Between 0 (Max 1)),
+       REnd "Entry" "attrib" (Exactly 1)],
+     Relationship "Attrib_subject" [
+       REnd "Attrib" "subject" (Between 0 Infinite),
+       REnd "Entry" "attrib_ref" (Exactly 1)],
      Relationship "Action_entry" [
        REnd "Action" "entry" (Between 0 (Max 1)),
        REnd "Entry" "action" (Exactly 1)],
+     Relationship "Action_subject" [
+       REnd "Action" "subject" (Between 0 Infinite),
+       REnd "Entry" "action_ref" (Exactly 1)],
      Relationship "Activity_entry" [
        REnd "Activity" "entry" (Between 0 (Max 1)),
        REnd "Entry" "activity" (Exactly 1)],
