@@ -119,14 +119,9 @@ update x =
     Measurement (Just k) created timestamp measurer measured value unit precision ->
       Action.update (Action.Action (Just k) created timestamp measurer) >+
       execute 
-        ("UPDATE Measurement" ++
-         "SET (" ++
-         "  Measurement.Unit" ++
-         "  Measurement.Value" ++
-         "  Measurement.Precision" ++
-         "  Measurement.EntryMeasurement_ofKey)" ++
-         "  = ('?', '?', '?', '?')" ++
-         "WHERE Measurement.EntryMeasurement_entryKey = '?';")
+        ("UPDATE Measurement " ++
+         "SET (Unit, Value, Precision, EntryMeasurement_ofKey) = ('?', '?', '?', '?') " ++
+         "WHERE EntryMeasurement_entryKey = '?';")
         [SQLString unit, SQLFloat value, SQLFloat precision, SQLInt measured, SQLInt k]
     _ -> failDB $ DBError UnknownError "Error: An error occured while trying to update a measurement."
 
