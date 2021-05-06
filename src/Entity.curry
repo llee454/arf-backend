@@ -48,11 +48,10 @@ insert :: Entity -> DBAction Entity
 insert x@(Entity k created name)
   | isJust k = failDB $ DBError UnknownError "Error: An error occured while trying to insert an entity into the database."
   | otherwise =
-    runInTransaction $
-      arf.newEntry created >+=
-      (\(arf.Entry (EntryID j) created) ->
-        arf.newEntityWithEntryEntity_entryKey name (EntryID j) >+
-        returnDB (Right (x {key = Just j})))
+    arf.newEntry created >+=
+    (\(arf.Entry (EntryID j) created) ->
+      arf.newEntityWithEntryEntity_entryKey name (EntryID j) >+
+      returnDB (Right (x {key = Just j})))
 
 --- Accepts an Entity ID and reads the associated Entity.
 read :: Int -> DBAction (Maybe Entity)
@@ -71,16 +70,14 @@ read k =
 --- Accepts an entity and updates the associated database tables.
 update :: Entity -> DBAction ()
 update (Entity (Just k) created name) =
-  runInTransaction $
-    execute "UPDATE Entity SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
-    execute "UPDATE Entry  SET Name = '?' WHERE EntryEntity_entryKey = '?';" [SQLString name, SQLInt k]
+  execute "UPDATE Entity SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
+  execute "UPDATE Entry  SET Name = '?' WHERE EntryEntity_entryKey = '?';" [SQLString name, SQLInt k]
 
 --- Accepts an Entity ID and deletes the associated entity.
 delete :: Int -> DBAction ()
 delete k =
-  runInTransaction $
-    execute "DELETE FROM Entity WHERE Key = '?';" [SQLInt k] >+
-    execute "DELETE FROM Entry  WHERE EntryEntity_entryKey = '?';" [SQLInt k]
+  execute "DELETE FROM Entity WHERE Key = '?';" [SQLInt k] >+
+  execute "DELETE FROM Entry  WHERE EntryEntity_entryKey = '?';" [SQLInt k]
 
 entityIntf :: EntityIntf Entity
 entityIntf = EntityIntf {

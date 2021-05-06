@@ -59,11 +59,10 @@ insert :: PredicateIntf a b -> a -> DBAction a
 insert intf x
   | isJust (predicateKey_ intf x) = failDB $ DBError UnknownError $ "Error: An error occured while trying to insert an attribute into the database. Cannot insert an instantiated " ++ predicateName_ intf ++ "."
   | otherwise =
-    runInTransaction $
-      arf.newEntry (created_ intf x) >+=
-      (\(arf.Entry (EntryID j) _) ->
-       (predicateInsert_ intf (EntryID j) (EntryID $ subject_ intf x)) >+
-       returnDB (Right (cons_ intf (Just j) (created_ intf x) (subject_ intf x))))
+    arf.newEntry (created_ intf x) >+=
+    (\(arf.Entry (EntryID j) _) ->
+     (predicateInsert_ intf (EntryID j) (EntryID $ subject_ intf x)) >+
+     returnDB (Right (cons_ intf (Just j) (created_ intf x) (subject_ intf x))))
 
 --- Accepts a predicate entity ID and reads the associated entity.
 read :: PredicateIntf a _ -> Int -> DBAction (Maybe a)
@@ -85,16 +84,14 @@ update :: PredicateIntf a _ -> a -> DBAction ()
 update intf x =
   case predicateKey_ intf x of 
     Just k ->
-      runInTransaction $ 
-        execute "UPDATE ENTRY SET Timestamp = '?' WHERE Key = '?';" [SQLDate (created_ intf x), SQLInt k]
+      execute "UPDATE ENTRY SET Timestamp = '?' WHERE Key = '?';" [SQLDate (created_ intf x), SQLInt k]
     _ -> failDB $ DBError UnknownError $ "Error: An error occured while trying to update a(n) " ++ predicateName_ intf ++ "."
 
 --- Accepts an Event ID and deletes the associated predicate entity.
 delete :: PredicateIntf a _ -> Int -> DBAction ()
 delete intf k =
-  runInTransaction $
-    execute "DELETE FROM Entry WHERE Key = '?';" [SQLInt k] >+
-    execute ("DELETE FROM " ++ tblName_ intf ++ " WHERE Entry" ++ tblName_ intf ++ " = '?';") [SQLInt k]
+  execute "DELETE FROM Entry WHERE Key = '?';" [SQLInt k] >+
+  execute ("DELETE FROM " ++ tblName_ intf ++ " WHERE Entry" ++ tblName_ intf ++ " = '?';") [SQLInt k]
 
 entityIntf :: PredicateIntf a _ -> EntityIntf a
 entityIntf intf = EntityIntf {

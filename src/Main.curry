@@ -16,9 +16,12 @@ import Base
 import Env
 import URL
 import arf
+import Action
+import Activity
+import Attribute
 import Entity
 import Event
-import Attribute
+import qualified Measurement
 
 main :: IO ()
 main = Env.init >>= route
@@ -26,11 +29,14 @@ main = Env.init >>= route
 --- Registers the request handlers.
 handlers :: [(String, [String] -> Env -> IO ())]
 handlers = [
-    ("status",    const (reply "Available")),
-    ("version",   const (reply "1.0.0")),
-    ("entity",    Entity.handler),
-    ("event",     Event.handler),
-    ("attribute", Attribute.handler)
+    ("action",      Action.handler),
+    ("activity",    Activity.handler),
+    ("attribute",   Attribute.handler),
+    ("entity",      Entity.handler),
+    ("event",       Event.handler),
+    ("measurement", Measurement.handler),
+    ("status",      const (reply "Available")),
+    ("version",     const (reply "1.0.0"))
   ]
 
 --- Routes the incoming request to the appropriate handler.

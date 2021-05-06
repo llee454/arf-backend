@@ -49,11 +49,10 @@ insert :: Event -> DBAction Event
 insert x@(Event k created timestamp)
   | isJust k = failDB $ DBError UnknownError "Error: An error occured while trying to insert an event into the database. Cannot insert an instantiated event."
   | otherwise =
-    runInTransaction $
-      arf.newEntry created >+=
-      (\(arf.Entry (EntryID j) _) ->
-       arf.newEventWithEntryEvent_entryKey timestamp (EntryID j) >+
-       returnDB (Right (x {key = Just j})))
+    arf.newEntry created >+=
+    (\(arf.Entry (EntryID j) _) ->
+     arf.newEventWithEntryEvent_entryKey timestamp (EntryID j) >+
+     returnDB (Right (x {key = Just j})))
 
 --- Accepts an Event ID and reads the associated event.
 read :: Int -> DBAction (Maybe Event)
@@ -74,17 +73,15 @@ update :: Event -> DBAction ()
 update x =
   case x of
     Event (Just k) created timestamp ->
-      runInTransaction $
-        execute "UPDATE Entity SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
-        execute "UPDATE Event  SET Name = '?' WHERE EntryEvent_entryKey = '?';" [SQLDate timestamp, SQLInt k]
+      execute "UPDATE Entry SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
+      execute "UPDATE Event SET Timestamp = '?' WHERE EntryEvent_entryKey = '?';" [SQLDate timestamp, SQLInt k]
     _ -> failDB $ DBError UnknownError "Error: An error occured while trying to update an event."
 
 --- Accepts an Event ID and deletes the associated event.
 delete :: Int -> DBAction ()
 delete k =
-  runInTransaction $
-    execute "DELETE FROM Entity WHERE Key = '?';" [SQLInt k] >+
-    execute "DELETE FROM Event  WHERE EntryEvent_entryKey = '?';" [SQLInt k]
+  execute "DELETE FROM Entry WHERE Key = '?';" [SQLInt k] >+
+  execute "DELETE FROM Event WHERE EntryEvent_entryKey = '?';" [SQLInt k]
 
 entityIntf :: EntityIntf Event
 entityIntf = EntityIntf {

@@ -10,11 +10,11 @@ arf =
      Entity "Event" [Attribute "Timestamp" (DateDom Nothing) NoKey False],
      Entity "Attrib" [],
      Entity "Action" [],
-     Entity "Activity" [],
+     Entity "Activity" [Attribute "Duration" (DateDom Nothing) NoKey False],
      Entity "Measurement" [
        Attribute "Unit" (StringDom Nothing) NoKey False,
        Attribute "Value" (FloatDom Nothing) NoKey False,
-       Attribute "Precision" (StringDom Nothing) NoKey False],
+       Attribute "Precision" (FloatDom Nothing) NoKey False],
      Entity "Duration" [],
      Entity "Weight" [],
      Entity "Circumference" []
@@ -41,12 +41,12 @@ arf =
      Relationship "Activity_entry" [
        REnd "Activity" "entry" (Between 0 (Max 1)),
        REnd "Entry" "activity" (Exactly 1)],
-     Relationship "Measurement_action_entry" [
+     Relationship "Measurement_entry" [
        REnd "Measurement" "entry" (Between 0 (Max 1)),
-       REnd "Entry" "action" (Exactly 1)],
-     Relationship "Measurement_of_entry" [
-       REnd "Measurement" "entry" (Between 0 (Max 1)),
-       REnd "Entry" "of" (Exactly 1)],
+       REnd "Entry" "is_measurement" (Exactly 1)],
+     Relationship "Measurement_of" [
+       REnd "Measurement" "of" (Between 0 (Max 1)),
+       REnd "Entry" "measurement" (Exactly 1)],
      Relationship "Duration_entry" [
        REnd "Duration" "entry" (Between 0 (Max 1)),
        REnd "Entry" "duration" (Exactly 1)],

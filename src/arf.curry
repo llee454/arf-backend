@@ -43,13 +43,13 @@ data Action = Action ActionID EntryID EntryID
 data ActionID = ActionID Int
  deriving (Eq,Show,Read)
 
-data Activity = Activity ActivityID EntryID
+data Activity = Activity ActivityID Time.ClockTime EntryID
  deriving (Eq,Show,Read)
 
 data ActivityID = ActivityID Int
  deriving (Eq,Show,Read)
 
-data Measurement = Measurement MeasurementID String Float String EntryID EntryID
+data Measurement = Measurement MeasurementID String Float Float EntryID EntryID
  deriving (Eq,Show,Read)
 
 data MeasurementID = MeasurementID Int
@@ -787,16 +787,21 @@ activity_CDBI_Description
   :: Database.CDBI.Description.EntityDescription Activity
 activity_CDBI_Description =
   Database.CDBI.Description.ED "Activity"
-   [Database.CDBI.Connection.SQLTypeInt,Database.CDBI.Connection.SQLTypeInt]
-   (\(Activity (ActivityID key) (EntryID entryActivity_entryKey)) ->
+   [Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeDate
+   ,Database.CDBI.Connection.SQLTypeInt]
+   (\(Activity (ActivityID key) duration (EntryID entryActivity_entryKey)) ->
      [Database.CDBI.Connection.SQLInt key
+     ,Database.CDBI.Connection.SQLDate duration
      ,Database.CDBI.Connection.SQLInt entryActivity_entryKey])
-   (\(Activity _ (EntryID entryActivity_entryKey)) ->
+   (\(Activity _ duration (EntryID entryActivity_entryKey)) ->
      [Database.CDBI.Connection.SQLNull
+     ,Database.CDBI.Connection.SQLDate duration
      ,Database.CDBI.Connection.SQLInt entryActivity_entryKey])
    (\[Database.CDBI.Connection.SQLInt key
+     ,Database.CDBI.Connection.SQLDate duration
      ,Database.CDBI.Connection.SQLInt entryActivity_entryKey] ->
-     Activity (ActivityID key) (EntryID entryActivity_entryKey))
+     Activity (ActivityID key) duration (EntryID entryActivity_entryKey))
 
 --- The database table of the `Activity` entity.
 activityTable :: Database.CDBI.Description.Table
@@ -806,6 +811,11 @@ activityTable = "Activity"
 activityColumnKey :: Database.CDBI.Description.Column ActivityID
 activityColumnKey =
   Database.CDBI.Description.Column "\"Key\"" "\"Activity\".\"Key\""
+
+--- The database column `Duration` of the `Activity` entity.
+activityColumnDuration :: Database.CDBI.Description.Column Time.ClockTime
+activityColumnDuration =
+  Database.CDBI.Description.Column "\"Duration\"" "\"Activity\".\"Duration\""
 
 --- The database column `EntryActivity_entryKey` of the `Activity` entity.
 activityColumnEntryActivity_entryKey :: Database.CDBI.Description.Column EntryID
@@ -821,6 +831,15 @@ activityKeyColDesc =
    (\(ActivityID key) -> Database.CDBI.Connection.SQLInt key)
    (\(Database.CDBI.Connection.SQLInt key) -> ActivityID key)
 
+--- The description of the database column `Duration` of the `Activity` entity.
+activityDurationColDesc
+  :: Database.CDBI.Description.ColumnDescription Time.ClockTime
+activityDurationColDesc =
+  Database.CDBI.Description.ColDesc "\"Activity\".\"Duration\""
+   Database.CDBI.Connection.SQLTypeDate
+   (\duration -> Database.CDBI.Connection.SQLDate duration)
+   (\(Database.CDBI.Connection.SQLDate duration) -> duration)
+
 --- The description of the database column `EntryActivity_entryKey` of the `Activity` entity.
 activityEntryActivity_entryKeyColDesc
   :: Database.CDBI.Description.ColumnDescription EntryID
@@ -834,19 +853,27 @@ activityEntryActivity_entryKeyColDesc =
 
 --- Gets the attribute `Key` of the `Activity` entity.
 activityKey :: Activity -> ActivityID
-activityKey (Activity a _) = a
+activityKey (Activity a _ _) = a
+
+--- Gets the attribute `Duration` of the `Activity` entity.
+activityDuration :: Activity -> Time.ClockTime
+activityDuration (Activity _ a _) = a
 
 --- Gets the attribute `EntryActivity_entryKey` of the `Activity` entity.
 activityEntryActivity_entryKey :: Activity -> EntryID
-activityEntryActivity_entryKey (Activity _ a) = a
+activityEntryActivity_entryKey (Activity _ _ a) = a
 
 --- Sets the attribute `Key` of the `Activity` entity.
 setActivityKey :: Activity -> ActivityID -> Activity
-setActivityKey (Activity _ b1) a = Activity a b1
+setActivityKey (Activity _ b2 b1) a = Activity a b2 b1
+
+--- Sets the attribute `Duration` of the `Activity` entity.
+setActivityDuration :: Activity -> Time.ClockTime -> Activity
+setActivityDuration (Activity a2 _ b1) a = Activity a2 a b1
 
 --- Sets the attribute `EntryActivity_entryKey` of the `Activity` entity.
 setActivityEntryActivity_entryKey :: Activity -> EntryID -> Activity
-setActivityEntryActivity_entryKey (Activity a2 _) a = Activity a2 a
+setActivityEntryActivity_entryKey (Activity a3 a2 _) a = Activity a3 a2 a
 
 --- id-to-value function for entity `Activity`.
 activityID :: ActivityID -> Database.CDBI.Criteria.Value ActivityID
@@ -887,11 +914,11 @@ getActivity =
 
 --- Inserts a new `Activity` entity.
 newActivityWithEntryActivity_entryKey
-  :: EntryID -> Database.CDBI.Connection.DBAction Activity
-newActivityWithEntryActivity_entryKey entryActivity_entryKey_p =
+  :: Time.ClockTime -> EntryID -> Database.CDBI.Connection.DBAction Activity
+newActivityWithEntryActivity_entryKey duration_p entryActivity_entryKey_p =
   Database.CDBI.ER.insertNewEntry activity_CDBI_Description setActivityKey
    ActivityID
-   (Activity (ActivityID 0) entryActivity_entryKey_p)
+   (Activity (ActivityID 0) duration_p entryActivity_entryKey_p)
 
 --- Deletes an existing `Activity` entry by its key.
 deleteActivity :: Activity -> Database.CDBI.Connection.DBAction ()
@@ -911,7 +938,7 @@ measurement_CDBI_Description =
    [Database.CDBI.Connection.SQLTypeInt
    ,Database.CDBI.Connection.SQLTypeString
    ,Database.CDBI.Connection.SQLTypeFloat
-   ,Database.CDBI.Connection.SQLTypeString
+   ,Database.CDBI.Connection.SQLTypeFloat
    ,Database.CDBI.Connection.SQLTypeInt
    ,Database.CDBI.Connection.SQLTypeInt]
    (\(Measurement
@@ -919,36 +946,36 @@ measurement_CDBI_Description =
        unit
        value
        precision
-       (EntryID entryMeasurement_action_entryKey)
-       (EntryID entryMeasurement_of_entryKey)) ->
+       (EntryID entryMeasurement_entryKey)
+       (EntryID entryMeasurement_ofKey)) ->
      [Database.CDBI.Connection.SQLInt key
      ,Database.CDBI.Connection.SQLString unit
      ,Database.CDBI.Connection.SQLFloat value
-     ,Database.CDBI.Connection.SQLString precision
-     ,Database.CDBI.Connection.SQLInt entryMeasurement_action_entryKey
-     ,Database.CDBI.Connection.SQLInt entryMeasurement_of_entryKey])
+     ,Database.CDBI.Connection.SQLFloat precision
+     ,Database.CDBI.Connection.SQLInt entryMeasurement_entryKey
+     ,Database.CDBI.Connection.SQLInt entryMeasurement_ofKey])
    (\(Measurement
        _
        unit
        value
        precision
-       (EntryID entryMeasurement_action_entryKey)
-       (EntryID entryMeasurement_of_entryKey)) ->
+       (EntryID entryMeasurement_entryKey)
+       (EntryID entryMeasurement_ofKey)) ->
      [Database.CDBI.Connection.SQLNull
      ,Database.CDBI.Connection.SQLString unit
      ,Database.CDBI.Connection.SQLFloat value
-     ,Database.CDBI.Connection.SQLString precision
-     ,Database.CDBI.Connection.SQLInt entryMeasurement_action_entryKey
-     ,Database.CDBI.Connection.SQLInt entryMeasurement_of_entryKey])
+     ,Database.CDBI.Connection.SQLFloat precision
+     ,Database.CDBI.Connection.SQLInt entryMeasurement_entryKey
+     ,Database.CDBI.Connection.SQLInt entryMeasurement_ofKey])
    (\[Database.CDBI.Connection.SQLInt key
      ,Database.CDBI.Connection.SQLString unit
      ,Database.CDBI.Connection.SQLFloat value
-     ,Database.CDBI.Connection.SQLString precision
-     ,Database.CDBI.Connection.SQLInt entryMeasurement_action_entryKey
-     ,Database.CDBI.Connection.SQLInt entryMeasurement_of_entryKey] ->
+     ,Database.CDBI.Connection.SQLFloat precision
+     ,Database.CDBI.Connection.SQLInt entryMeasurement_entryKey
+     ,Database.CDBI.Connection.SQLInt entryMeasurement_ofKey] ->
      Measurement (MeasurementID key) unit value precision
-      (EntryID entryMeasurement_action_entryKey)
-      (EntryID entryMeasurement_of_entryKey))
+      (EntryID entryMeasurement_entryKey)
+      (EntryID entryMeasurement_ofKey))
 
 --- The database table of the `Measurement` entity.
 measurementTable :: Database.CDBI.Description.Table
@@ -970,24 +997,24 @@ measurementColumnValue =
   Database.CDBI.Description.Column "\"Value\"" "\"Measurement\".\"Value\""
 
 --- The database column `Precision` of the `Measurement` entity.
-measurementColumnPrecision :: Database.CDBI.Description.Column String
+measurementColumnPrecision :: Database.CDBI.Description.Column Float
 measurementColumnPrecision =
   Database.CDBI.Description.Column "\"Precision\""
    "\"Measurement\".\"Precision\""
 
---- The database column `EntryMeasurement_action_entryKey` of the `Measurement` entity.
-measurementColumnEntryMeasurement_action_entryKey
+--- The database column `EntryMeasurement_entryKey` of the `Measurement` entity.
+measurementColumnEntryMeasurement_entryKey
   :: Database.CDBI.Description.Column EntryID
-measurementColumnEntryMeasurement_action_entryKey =
-  Database.CDBI.Description.Column "\"EntryMeasurement_action_entryKey\""
-   "\"Measurement\".\"EntryMeasurement_action_entryKey\""
+measurementColumnEntryMeasurement_entryKey =
+  Database.CDBI.Description.Column "\"EntryMeasurement_entryKey\""
+   "\"Measurement\".\"EntryMeasurement_entryKey\""
 
---- The database column `EntryMeasurement_of_entryKey` of the `Measurement` entity.
-measurementColumnEntryMeasurement_of_entryKey
+--- The database column `EntryMeasurement_ofKey` of the `Measurement` entity.
+measurementColumnEntryMeasurement_ofKey
   :: Database.CDBI.Description.Column EntryID
-measurementColumnEntryMeasurement_of_entryKey =
-  Database.CDBI.Description.Column "\"EntryMeasurement_of_entryKey\""
-   "\"Measurement\".\"EntryMeasurement_of_entryKey\""
+measurementColumnEntryMeasurement_ofKey =
+  Database.CDBI.Description.Column "\"EntryMeasurement_ofKey\""
+   "\"Measurement\".\"EntryMeasurement_ofKey\""
 
 --- The description of the database column `Key` of the `Measurement` entity.
 measurementKeyColDesc
@@ -1015,37 +1042,35 @@ measurementValueColDesc =
    (\(Database.CDBI.Connection.SQLFloat value) -> value)
 
 --- The description of the database column `Precision` of the `Measurement` entity.
-measurementPrecisionColDesc
-  :: Database.CDBI.Description.ColumnDescription String
+measurementPrecisionColDesc :: Database.CDBI.Description.ColumnDescription Float
 measurementPrecisionColDesc =
   Database.CDBI.Description.ColDesc "\"Measurement\".\"Precision\""
-   Database.CDBI.Connection.SQLTypeString
-   (\precision -> Database.CDBI.Connection.SQLString precision)
-   (\(Database.CDBI.Connection.SQLString precision) -> precision)
+   Database.CDBI.Connection.SQLTypeFloat
+   (\precision -> Database.CDBI.Connection.SQLFloat precision)
+   (\(Database.CDBI.Connection.SQLFloat precision) -> precision)
 
---- The description of the database column `EntryMeasurement_action_entryKey` of the `Measurement` entity.
-measurementEntryMeasurement_action_entryKeyColDesc
+--- The description of the database column `EntryMeasurement_entryKey` of the `Measurement` entity.
+measurementEntryMeasurement_entryKeyColDesc
   :: Database.CDBI.Description.ColumnDescription EntryID
-measurementEntryMeasurement_action_entryKeyColDesc =
+measurementEntryMeasurement_entryKeyColDesc =
   Database.CDBI.Description.ColDesc
-   "\"Measurement\".\"EntryMeasurement_action_entryKey\""
+   "\"Measurement\".\"EntryMeasurement_entryKey\""
    Database.CDBI.Connection.SQLTypeInt
-   (\(EntryID entryMeasurement_action_entryKey) ->
-     Database.CDBI.Connection.SQLInt entryMeasurement_action_entryKey)
-   (\(Database.CDBI.Connection.SQLInt entryMeasurement_action_entryKey) ->
-     EntryID entryMeasurement_action_entryKey)
+   (\(EntryID entryMeasurement_entryKey) ->
+     Database.CDBI.Connection.SQLInt entryMeasurement_entryKey)
+   (\(Database.CDBI.Connection.SQLInt entryMeasurement_entryKey) ->
+     EntryID entryMeasurement_entryKey)
 
---- The description of the database column `EntryMeasurement_of_entryKey` of the `Measurement` entity.
-measurementEntryMeasurement_of_entryKeyColDesc
+--- The description of the database column `EntryMeasurement_ofKey` of the `Measurement` entity.
+measurementEntryMeasurement_ofKeyColDesc
   :: Database.CDBI.Description.ColumnDescription EntryID
-measurementEntryMeasurement_of_entryKeyColDesc =
-  Database.CDBI.Description.ColDesc
-   "\"Measurement\".\"EntryMeasurement_of_entryKey\""
+measurementEntryMeasurement_ofKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Measurement\".\"EntryMeasurement_ofKey\""
    Database.CDBI.Connection.SQLTypeInt
-   (\(EntryID entryMeasurement_of_entryKey) ->
-     Database.CDBI.Connection.SQLInt entryMeasurement_of_entryKey)
-   (\(Database.CDBI.Connection.SQLInt entryMeasurement_of_entryKey) ->
-     EntryID entryMeasurement_of_entryKey)
+   (\(EntryID entryMeasurement_ofKey) ->
+     Database.CDBI.Connection.SQLInt entryMeasurement_ofKey)
+   (\(Database.CDBI.Connection.SQLInt entryMeasurement_ofKey) ->
+     EntryID entryMeasurement_ofKey)
 
 --- Gets the attribute `Key` of the `Measurement` entity.
 measurementKey :: Measurement -> MeasurementID
@@ -1060,16 +1085,16 @@ measurementValue :: Measurement -> Float
 measurementValue (Measurement _ _ a _ _ _) = a
 
 --- Gets the attribute `Precision` of the `Measurement` entity.
-measurementPrecision :: Measurement -> String
+measurementPrecision :: Measurement -> Float
 measurementPrecision (Measurement _ _ _ a _ _) = a
 
---- Gets the attribute `EntryMeasurement_action_entryKey` of the `Measurement` entity.
-measurementEntryMeasurement_action_entryKey :: Measurement -> EntryID
-measurementEntryMeasurement_action_entryKey (Measurement _ _ _ _ a _) = a
+--- Gets the attribute `EntryMeasurement_entryKey` of the `Measurement` entity.
+measurementEntryMeasurement_entryKey :: Measurement -> EntryID
+measurementEntryMeasurement_entryKey (Measurement _ _ _ _ a _) = a
 
---- Gets the attribute `EntryMeasurement_of_entryKey` of the `Measurement` entity.
-measurementEntryMeasurement_of_entryKey :: Measurement -> EntryID
-measurementEntryMeasurement_of_entryKey (Measurement _ _ _ _ _ a) = a
+--- Gets the attribute `EntryMeasurement_ofKey` of the `Measurement` entity.
+measurementEntryMeasurement_ofKey :: Measurement -> EntryID
+measurementEntryMeasurement_ofKey (Measurement _ _ _ _ _ a) = a
 
 --- Sets the attribute `Key` of the `Measurement` entity.
 setMeasurementKey :: Measurement -> MeasurementID -> Measurement
@@ -1087,21 +1112,18 @@ setMeasurementValue (Measurement a3 a2 _ b3 b2 b1) a =
   Measurement a3 a2 a b3 b2 b1
 
 --- Sets the attribute `Precision` of the `Measurement` entity.
-setMeasurementPrecision :: Measurement -> String -> Measurement
+setMeasurementPrecision :: Measurement -> Float -> Measurement
 setMeasurementPrecision (Measurement a4 a3 a2 _ b2 b1) a =
   Measurement a4 a3 a2 a b2 b1
 
---- Sets the attribute `EntryMeasurement_action_entryKey` of the `Measurement` entity.
-setMeasurementEntryMeasurement_action_entryKey
-  :: Measurement -> EntryID -> Measurement
-setMeasurementEntryMeasurement_action_entryKey
-    (Measurement a5 a4 a3 a2 _ b1) a =
+--- Sets the attribute `EntryMeasurement_entryKey` of the `Measurement` entity.
+setMeasurementEntryMeasurement_entryKey :: Measurement -> EntryID -> Measurement
+setMeasurementEntryMeasurement_entryKey (Measurement a5 a4 a3 a2 _ b1) a =
   Measurement a5 a4 a3 a2 a b1
 
---- Sets the attribute `EntryMeasurement_of_entryKey` of the `Measurement` entity.
-setMeasurementEntryMeasurement_of_entryKey
-  :: Measurement -> EntryID -> Measurement
-setMeasurementEntryMeasurement_of_entryKey (Measurement a6 a5 a4 a3 a2 _) a =
+--- Sets the attribute `EntryMeasurement_ofKey` of the `Measurement` entity.
+setMeasurementEntryMeasurement_ofKey :: Measurement -> EntryID -> Measurement
+setMeasurementEntryMeasurement_ofKey (Measurement a6 a5 a4 a3 a2 _) a =
   Measurement a6 a5 a4 a3 a2 a
 
 --- id-to-value function for entity `Measurement`.
@@ -1146,22 +1168,22 @@ getMeasurement =
    measurementID
 
 --- Inserts a new `Measurement` entity.
-newMeasurementWithEntryMeasurement_action_entryKeyWithEntryMeasurement_of_entryKey
+newMeasurementWithEntryMeasurement_entryKeyWithEntryMeasurement_ofKey
   :: String
   -> Float
-  -> String
+  -> Float
   -> EntryID -> EntryID -> Database.CDBI.Connection.DBAction Measurement
-newMeasurementWithEntryMeasurement_action_entryKeyWithEntryMeasurement_of_entryKey
+newMeasurementWithEntryMeasurement_entryKeyWithEntryMeasurement_ofKey
     unit_p
     value_p
     precision_p
-    entryMeasurement_action_entryKey_p
-    entryMeasurement_of_entryKey_p =
+    entryMeasurement_entryKey_p
+    entryMeasurement_ofKey_p =
   Database.CDBI.ER.insertNewEntry measurement_CDBI_Description setMeasurementKey
    MeasurementID
    (Measurement (MeasurementID 0) unit_p value_p precision_p
-     entryMeasurement_action_entryKey_p
-     entryMeasurement_of_entryKey_p)
+     entryMeasurement_entryKey_p
+     entryMeasurement_ofKey_p)
 
 --- Deletes an existing `Measurement` entry by its key.
 deleteMeasurement :: Measurement -> Database.CDBI.Connection.DBAction ()
@@ -1564,8 +1586,8 @@ createNewDB dbfile =
        ,"create table 'Event'('Key' integer primary key ,'Timestamp' string not null ,'EntryEvent_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Attrib'('Key' integer primary key ,'EntryAttrib_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryAttrib_subjectKey' int REFERENCES 'Entry'(Key) not null);"
        ,"create table 'Action'('Key' integer primary key ,'EntryAction_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryAction_subjectKey' int REFERENCES 'Entry'(Key) not null);"
-       ,"create table 'Activity'('Key' integer primary key ,'EntryActivity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
-       ,"create table 'Measurement'('Key' integer primary key ,'Unit' string not null ,'Value' float not null ,'Precision' string not null ,'EntryMeasurement_action_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryMeasurement_of_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
+       ,"create table 'Activity'('Key' integer primary key ,'Duration' string not null ,'EntryActivity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
+       ,"create table 'Measurement'('Key' integer primary key ,'Unit' string not null ,'Value' float not null ,'Precision' float not null ,'EntryMeasurement_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryMeasurement_ofKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Duration'('Key' integer primary key ,'EntryDuration_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Weight'('Key' integer primary key ,'EntryWeight_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Circumference'('Key' integer primary key ,'EntryCircumference_entryKey' int REFERENCES 'Entry'(Key) unique not null);"]

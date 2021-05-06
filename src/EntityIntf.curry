@@ -34,24 +34,24 @@ handler intf args env = do
   let json = parseJSON req
     in case (args, json, json >>- ofJSON_ intf) of
       (["create"], _, Just x) ->
-        run (insert_ intf x)
+        run (runInTransaction $ insert_ intf x)
           (("Error: An error occured while trying to insert an " ++ name_ intf ++ " into the database. ") ++)
           (\x -> Env.reply $ ppJSON $ JObject [
             ("id", maybeIntToJSON (key_ intf x))])
           env
       (["read", k], _, _) ->
-        run (read_ intf (Prelude.read k :: Int))
-          (("Error: An error occured while trying to read an " ++ name_ intf ++ " into the database. ") ++)
+        run (runInTransaction $ read_ intf (Prelude.read k :: Int))
+          (("Error: An error occured while trying to read a(n) " ++ name_ intf ++ " from the database. ") ++)
           (\x -> Env.reply $ ppJSON $
             maybeToJSON (\e -> JObject [(name_ intf, toJSON_ intf e)]) x)
           env
       (["update"], _, Just x) ->
-        run (update_ intf x)
+        run (runInTransaction $ update_ intf x)
           (("Error: An error occured while trying to update an " ++ name_ intf ++ " into the database. ") ++)
           (const $ Env.end)
           env
       (["delete", k], _, _) ->
-        run (delete_ intf (Prelude.read k :: Int))
+        run (runInTransaction $ delete_ intf (Prelude.read k :: Int))
           (("Error: An error occured while trying to delete an " ++ name_ intf ++ " from the database. ") ++)
           (const $ Env.end)
           env

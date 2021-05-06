@@ -22,14 +22,15 @@
             Attribute "EntryAction_subjectKey" (KeyDom "Entry") NoKey False],
     Entity "Activity"
            [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "Duration" (DateDom Nothing) NoKey False,
             Attribute "EntryActivity_entryKey" (KeyDom "Entry") Unique False],
     Entity "Measurement"
            [Attribute "Key" (IntDom Nothing) PKey False,
             Attribute "Unit" (StringDom Nothing) NoKey False,
             Attribute "Value" (FloatDom Nothing) NoKey False,
-            Attribute "Precision" (StringDom Nothing) NoKey False,
-            Attribute "EntryMeasurement_action_entryKey" (KeyDom "Entry") Unique False,
-            Attribute "EntryMeasurement_of_entryKey" (KeyDom "Entry") Unique False],
+            Attribute "Precision" (FloatDom Nothing) NoKey False,
+            Attribute "EntryMeasurement_entryKey" (KeyDom "Entry") Unique False,
+            Attribute "EntryMeasurement_ofKey" (KeyDom "Entry") Unique False],
     Entity "Duration"
            [Attribute "Key" (IntDom Nothing) PKey False,
             Attribute "EntryDuration_entryKey" (KeyDom "Entry") Unique False],
@@ -48,12 +49,12 @@
     Relationship "Duration_entry"
                  [REnd "Duration" "entry" (Between 0 (Max 1)),
                   REnd "Entry" "duration" (Exactly 1)],
-    Relationship "Measurement_of_entry"
+    Relationship "Measurement_of"
+                 [REnd "Measurement" "of" (Between 0 (Max 1)),
+                  REnd "Entry" "measurement" (Exactly 1)],
+    Relationship "Measurement_entry"
                  [REnd "Measurement" "entry" (Between 0 (Max 1)),
-                  REnd "Entry" "of" (Exactly 1)],
-    Relationship "Measurement_action_entry"
-                 [REnd "Measurement" "entry" (Between 0 (Max 1)),
-                  REnd "Entry" "action" (Exactly 1)],
+                  REnd "Entry" "is_measurement" (Exactly 1)],
     Relationship "Activity_entry"
                  [REnd "Activity" "entry" (Between 0 (Max 1)),
                   REnd "Entry" "activity" (Exactly 1)],
