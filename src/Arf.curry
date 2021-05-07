@@ -15,9 +15,6 @@ arf =
        Attribute "Unit" (StringDom Nothing) NoKey False,
        Attribute "Value" (FloatDom Nothing) NoKey False,
        Attribute "Precision" (FloatDom Nothing) NoKey False],
-     Entity "Duration" [],
-     Entity "Weight" [],
-     Entity "Circumference" []
    ]
    [
      Relationship "Entity_entry" [
@@ -47,13 +44,4 @@ arf =
      Relationship "Measurement_of" [
        REnd "Measurement" "of" (Between 0 (Max 1)),
        REnd "Entry" "measurement" (Exactly 1)],
-     Relationship "Duration_entry" [
-       REnd "Duration" "entry" (Between 0 (Max 1)),
-       REnd "Entry" "duration" (Exactly 1)],
-     Relationship "Weight_entry" [
-       REnd "Weight" "entry" (Between 0 (Max 1)),
-       REnd "Entry" "weight" (Exactly 1)],
-     Relationship "Circumference_entry" [
-       REnd "Circumference" "entry" (Between 0 (Max 1)),
-       REnd "Entry" "circumference" (Exactly 1)]
    ]

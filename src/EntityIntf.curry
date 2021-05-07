@@ -27,9 +27,13 @@ data EntityIntf a = EntityIntf {
   delete_ :: Int -> DBAction ()
 }
 
---- 
-handler :: EntityIntf a -> [String] -> Env -> IO ()
-handler intf args env = do
+--- Handles CRUD requests and passes unrecognized requests to given extension handler.
+--- @param ext - an extension handler
+--- @param args - URL arguments
+--- @param env - an execution environment
+--- @return a request handler
+handler :: EntityIntf a -> ([String] -> String -> Env -> IO ()) -> [String] -> Env -> IO ()
+handler intf ext args env = do
   req <- getContents
   let json = parseJSON req
     in case (args, json, json >>- ofJSON_ intf) of
@@ -55,4 +59,8 @@ handler intf args env = do
           (("Error: An error occured while trying to delete an " ++ name_ intf ++ " from the database. ") ++)
           (const $ Env.end)
           env
-      _ -> endWithError ("Error: Invalid request. JSON: " ++ show json) env
+      _ -> ext args req env
+
+--- A handler which returns an "Invalid Request" error in response to every request.
+defaultHandler :: [String] -> String -> Env -> IO ()
+defaultHandler _ req = endWithError ("Error: Invalid request. JSON: " ++ (show $ parseJSON req))

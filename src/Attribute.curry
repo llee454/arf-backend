@@ -119,5 +119,41 @@ entityIntf = EntityIntf {
   delete_ = delete
 }
 
+--- Returns the attribute that has the given name and is associated with the given entry.
+getByEntryAndName :: Int -> String -> DBAction (Maybe Attribute)
+getByEntryAndName subject name =
+  select
+    ("SELECT " ++
+     "  Entry.Key, " ++
+     "  Entry.Timestamp " ++
+     "FROM Entry " ++
+     "INNER JOIN Entity ON Entity.EntryEntity_entryKey = Entry.Key " ++
+     "INNER JOIN Attrib ON Attrib.EntryAttrib_entryKey = Entry.Key " ++
+     "WHERE Attrib.EntryAttrib_subjectKey = '?' AND Entity.Name = '?';")
+    [SQLInt subject, SQLString name] [SQLTypeInt, SQLTypeDate] >+= from
+  where
+    from :: [[SQLValue]] -> DBAction (Maybe Attribute)
+    from res =
+      case res of
+        [[SQLInt k, SQLDate created]] ->
+           returnDB $ Right $ Just $ Attribute (Just k) created name subject
+        [] -> returnDB $ Right Nothing
+        _  -> failDB $ DBError UnknownError "Error: An error occured while trying to retrieve attributes by subject and name."
+
+--- Handles non-CRUD requests.
+--- @param args - the URL arguments
+--- @param env  - the execution environment
+--- @return handles the given requests
+extHandler :: [String] -> String -> Env -> IO ()
+extHandler args req =
+  let json = parseJSON req
+    in case (args, json, json >>- ofJSON) of
+      (["get-by-entry-and-name", subject, name], _, _) ->
+        run (runInTransaction $ getByEntryAndName (Prelude.read subject :: Int) name)
+          ("Error: An error occured while trying to retrieve an attribute by subject and name" ++)
+          (\x -> Env.reply $ ppJSON $
+            maybeToJSON (\e -> JObject [("attribute", toJSON e)]) x)
+      _ -> EntityIntf.defaultHandler args req
+
 handler :: [String] -> Env -> IO ()
-handler = EntityIntf.handler entityIntf
+handler = EntityIntf.handler entityIntf $ extHandler

@@ -109,4 +109,4 @@ entityIntf = EntityIntf {
 
 --- 
 handler :: [String] -> Env -> IO ()
-handler = EntityIntf.handler entityIntf
+handler = EntityIntf.handler entityIntf $ EntityIntf.defaultHandler
