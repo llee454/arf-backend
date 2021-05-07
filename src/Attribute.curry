@@ -15,7 +15,6 @@ import Database.CDBI.Criteria
 import Database.CDBI.Connection
 import Database.CDBI.Description
 
-import PredicateIntf
 import EntityIntf
 import JSONExt
 import Base
