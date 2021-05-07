@@ -70,14 +70,14 @@ read k =
 --- Accepts an entity and updates the associated database tables.
 update :: Entity -> DBAction ()
 update (Entity (Just k) created name) =
-  execute "UPDATE Entity SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
-  execute "UPDATE Entry  SET Name = '?' WHERE EntryEntity_entryKey = '?';" [SQLString name, SQLInt k]
+  execute "UPDATE Entry  SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
+  execute "UPDATE Entity SET Name = '?' WHERE EntryEntity_entryKey = '?';" [SQLString name, SQLInt k]
 
 --- Accepts an Entity ID and deletes the associated entity.
 delete :: Int -> DBAction ()
 delete k =
-  execute "DELETE FROM Entity WHERE Key = '?';" [SQLInt k] >+
-  execute "DELETE FROM Entry  WHERE EntryEntity_entryKey = '?';" [SQLInt k]
+  execute "DELETE FROM Entry  WHERE Key = '?';" [SQLInt k] >+
+  execute "DELETE FROM Entity WHERE EntryEntity_entryKey = '?';" [SQLInt k]
 
 entityIntf :: EntityIntf Entity
 entityIntf = EntityIntf {
