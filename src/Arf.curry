@@ -14,7 +14,7 @@ arf =
      Entity "Measurement" [
        Attribute "Unit" (StringDom Nothing) NoKey False,
        Attribute "Value" (FloatDom Nothing) NoKey False,
-       Attribute "Precision" (FloatDom Nothing) NoKey False],
+       Attribute "Precision" (FloatDom Nothing) NoKey False]
    ]
    [
      Relationship "Entity_entry" [
@@ -42,6 +42,6 @@ arf =
        REnd "Measurement" "entry" (Between 0 (Max 1)),
        REnd "Entry" "is_measurement" (Exactly 1)],
      Relationship "Measurement_of" [
-       REnd "Measurement" "of" (Between 0 (Max 1)),
-       REnd "Entry" "measurement" (Exactly 1)],
+       REnd "Measurement" "of" (Between 0 Infinite),
+       REnd "Entry" "measurement" (Exactly 1)]
    ]

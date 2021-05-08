@@ -143,6 +143,52 @@ entityIntf = EntityIntf {
   delete_ = delete
 }
 
+--- Returns the set of measurements of the referenced entity (attribute).
+--- @param measured - an entity ID
+--- @return the measurements of the referenced entity.
+getByMeasured :: Int -> DBAction [Measurement]
+getByMeasured measured =
+  select
+    ("SELECT " ++
+     "  Entry.Key, " ++
+     "  Entry.Timestamp, " ++
+     "  Event.Timestamp, " ++
+     "  Action.EntryAction_subjectKey, " ++
+     "  Measurement.Unit, " ++
+     "  Measurement.Value, " ++
+     "  Measurement.Precision " ++
+     "FROM Entry " ++
+     "INNER JOIN Event       ON Event.EntryEvent_entryKey       = Entry.Key " ++
+     "INNER JOIN Action      ON Action.EntryAction_entryKey     = Entry.Key " ++
+     "INNER JOIN Measurement ON Measurement.EntryMeasurement_entryKey = Entry.Key " ++
+     "WHERE Measurement.EntryMeasurement_ofKey = '?';")
+    [SQLInt measured] [SQLTypeInt, SQLTypeDate, SQLTypeDate, SQLTypeInt, SQLTypeString, SQLTypeFloat, SQLTypeFloat] >+= from
+  where  
+    from :: [[SQLValue]] -> DBAction [Measurement]
+    from = returnDB . Right . mapMaybe parseRes
+
+    parseRes :: [SQLValue] -> Maybe Measurement
+    parseRes res =
+      case res of
+        [SQLInt k, SQLDate created, SQLDate timestamp, SQLInt measurer, SQLString unit, SQLFloat value, SQLFloat precision] ->
+          Just $ Measurement (Just k) created timestamp measurer measured value unit precision
+        _  -> Nothing
+
+--- Handles non-CRUD requests.
+--- @param args - the URL arguments
+--- @param env  - the execution environment
+--- @return handles the given requests
+extHandler :: [String] -> String -> Env -> IO ()
+extHandler args req =
+  let json = parseJSON req
+    in case (args, json, json >>- ofJSON) of
+      (["get-by-measured", measured], _, _) ->
+        run (runInTransaction $ getByMeasured (Prelude.read measured :: Int))
+          ("Error: An error occured while trying to retrieve a measurement using the ID of the measured entity. " ++)
+          (\x -> Env.reply $ ppJSON $
+            JArray $ map (\e -> JObject [("measurement", toJSON e)]) x)
+      _ -> EntityIntf.defaultHandler args req
+
 --- 
 handler :: [String] -> Env -> IO ()
-handler = EntityIntf.handler entityIntf $ EntityIntf.defaultHandler
+handler = EntityIntf.handler entityIntf $ extHandler

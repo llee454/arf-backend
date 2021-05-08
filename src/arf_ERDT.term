@@ -30,27 +30,9 @@
             Attribute "Value" (FloatDom Nothing) NoKey False,
             Attribute "Precision" (FloatDom Nothing) NoKey False,
             Attribute "EntryMeasurement_entryKey" (KeyDom "Entry") Unique False,
-            Attribute "EntryMeasurement_ofKey" (KeyDom "Entry") Unique False],
-    Entity "Duration"
-           [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "EntryDuration_entryKey" (KeyDom "Entry") Unique False],
-    Entity "Weight"
-           [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "EntryWeight_entryKey" (KeyDom "Entry") Unique False],
-    Entity "Circumference"
-           [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "EntryCircumference_entryKey" (KeyDom "Entry") Unique False]]
-   [Relationship "Circumference_entry"
-                 [REnd "Circumference" "entry" (Between 0 (Max 1)),
-                  REnd "Entry" "circumference" (Exactly 1)],
-    Relationship "Weight_entry"
-                 [REnd "Weight" "entry" (Between 0 (Max 1)),
-                  REnd "Entry" "weight" (Exactly 1)],
-    Relationship "Duration_entry"
-                 [REnd "Duration" "entry" (Between 0 (Max 1)),
-                  REnd "Entry" "duration" (Exactly 1)],
-    Relationship "Measurement_of"
-                 [REnd "Measurement" "of" (Between 0 (Max 1)),
+            Attribute "EntryMeasurement_ofKey" (KeyDom "Entry") NoKey False]]
+   [Relationship "Measurement_of"
+                 [REnd "Measurement" "of" (Between 0 Infinite),
                   REnd "Entry" "measurement" (Exactly 1)],
     Relationship "Measurement_entry"
                  [REnd "Measurement" "entry" (Between 0 (Max 1)),

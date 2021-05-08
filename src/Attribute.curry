@@ -150,7 +150,7 @@ extHandler args req =
     in case (args, json, json >>- ofJSON) of
       (["get-by-entry-and-name", subject, name], _, _) ->
         run (runInTransaction $ getByEntryAndName (Prelude.read subject :: Int) name)
-          ("Error: An error occured while trying to retrieve an attribute by subject and name" ++)
+          ("Error: An error occured while trying to retrieve an attribute by subject and name. " ++)
           (\x -> Env.reply $ ppJSON $
             maybeToJSON (\e -> JObject [("attribute", toJSON e)]) x)
       _ -> EntityIntf.defaultHandler args req

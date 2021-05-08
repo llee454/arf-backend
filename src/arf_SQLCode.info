@@ -1,13 +1,5 @@
 SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
- [(("Entry","entry","Circumference")
-  ,SQLParserInfoType.OnetoN "Circumference_entry")
- ,(("Circumference","circumference","Entry")
-  ,SQLParserInfoType.NtoOne "Circumference_entry")
- ,(("Entry","entry","Weight"),SQLParserInfoType.OnetoN "Weight_entry")
- ,(("Weight","weight","Entry"),SQLParserInfoType.NtoOne "Weight_entry")
- ,(("Entry","entry","Duration"),SQLParserInfoType.OnetoN "Duration_entry")
- ,(("Duration","duration","Entry"),SQLParserInfoType.NtoOne "Duration_entry")
- ,(("Entry","of","Measurement"),SQLParserInfoType.OnetoN "Measurement_of")
+ [(("Entry","of","Measurement"),SQLParserInfoType.OnetoN "Measurement_of")
  ,(("Measurement","measurement","Entry")
   ,SQLParserInfoType.NtoOne "Measurement_of")
  ,(("Entry","entry","Measurement"),SQLParserInfoType.OnetoN "Measurement_entry")
@@ -49,13 +41,7 @@ SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
  ,("measurementValue",False)
  ,("measurementPrecision",False)
  ,("measurementEntryMeasurement_entryKey",False)
- ,("measurementEntryMeasurement_ofKey",False)
- ,("durationKey",False)
- ,("durationEntryDuration_entryKey",False)
- ,("weightKey",False)
- ,("weightEntryWeight_entryKey",False)
- ,("circumferenceKey",False)
- ,("circumferenceEntryCircumference_entryKey",False)]
+ ,("measurementEntryMeasurement_ofKey",False)]
  [("entry",("Entry",["Key","Timestamp"]))
  ,("entity",("Entity",["Key","Name","EntryEntity_entryKey"]))
  ,("event",("Event",["Key","Timestamp","EntryEvent_entryKey"]))
@@ -69,10 +55,7 @@ SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
     ,"Value"
     ,"Precision"
     ,"EntryMeasurement_entryKey"
-    ,"EntryMeasurement_ofKey"]))
- ,("duration",("Duration",["Key","EntryDuration_entryKey"]))
- ,("weight",("Weight",["Key","EntryWeight_entryKey"]))
- ,("circumference",("Circumference",["Key","EntryCircumference_entryKey"]))]
+    ,"EntryMeasurement_ofKey"]))]
  [("entryKey","Entry")
  ,("entryTimestamp","date")
  ,("entityKey","Entity")
@@ -95,10 +78,4 @@ SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
  ,("measurementValue","float")
  ,("measurementPrecision","float")
  ,("measurementEntryMeasurement_entryKey","Entry")
- ,("measurementEntryMeasurement_ofKey","Entry")
- ,("durationKey","Duration")
- ,("durationEntryDuration_entryKey","Entry")
- ,("weightKey","Weight")
- ,("weightEntryWeight_entryKey","Entry")
- ,("circumferenceKey","Circumference")
- ,("circumferenceEntryCircumference_entryKey","Entry")]
+ ,("measurementEntryMeasurement_ofKey","Entry")]
