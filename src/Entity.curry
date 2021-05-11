@@ -8,6 +8,7 @@ import Time
 import Maybe
 import JSON.Data
 import JSON.Parser
+import JSON.Pretty
 
 import Database.CDBI.ER
 import Database.CDBI.Criteria
@@ -91,6 +92,39 @@ entityIntf = EntityIntf {
   delete_ = delete
 }
 
+--- Returns the entity that has the given name.
+getByName :: String -> DBAction (Maybe Entity)
+getByName name =
+  select
+    ("SELECT " ++
+     "  Entry.Key, " ++
+     "  Entry.Timestamp " ++
+     "FROM Entry " ++
+     "INNER JOIN Entity ON Entity.EntryEntity_entryKey = Entry.Key " ++
+     "WHERE Entity.Name = '?';")
+    [SQLString name] [SQLTypeInt, SQLTypeDate] >+= from
+  where
+    from :: [[SQLValue]] -> DBAction (Maybe Entity)
+    from res =
+      case res of
+        [[SQLInt k, SQLDate created]] -> returnDB $ Right $ Just $ Entity (Just k) created name
+        [] -> returnDB $ Right Nothing
+        _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read an Entity from the SQLite database."
+
+--- Handles non-CRUD requests.
+--- @param args - the URL arguments
+--- @param env  - the execution environment
+--- @return handles the given requests
+extHandler :: [String] -> String -> Env -> IO ()
+extHandler args req =
+  case args of
+    ["get-by-name", name] ->
+      run (runInTransaction $ getByName name)
+        ("Error: An error occured while trying to retrieve an entity by name. " ++)
+        (\x -> Env.reply $ ppJSON $
+          maybeToJSON (\e -> JObject [("entity", toJSON e)]) x)
+    _ -> EntityIntf.defaultHandler args req
+
 --- 
 handler :: [String] -> Env -> IO ()
-handler = EntityIntf.handler entityIntf $ EntityIntf.defaultHandler
+handler = EntityIntf.handler entityIntf $ extHandler
