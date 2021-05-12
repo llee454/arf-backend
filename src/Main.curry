@@ -23,6 +23,8 @@ import Entity
 import Event
 import qualified Measurement
 
+import qualified Health
+
 main :: IO ()
 main = Env.init >>= route
 
@@ -34,10 +36,30 @@ handlers = [
     ("attribute",   Attribute.handler),
     ("entity",      Entity.handler),
     ("event",       Event.handler),
+    ("health",      Health.handler), 
+    ("init",        const init),
     ("measurement", Measurement.handler),
     ("status",      const (reply "Available")),
     ("version",     const (reply "1.0.0"))
   ]
+
+--- Registers modules that perform database initializations.
+initializers :: [IO (DBAction ())]
+initializers = [
+    Health.init
+  ]
+
+--- Initializes the database.
+init :: Env -> IO ()
+init env = do
+  query <- foldIO
+             (\acc initializer -> initializer >>= return . ((>+) acc))
+             (returnDB $ Right ())
+             initializers
+  run (runInTransaction query)
+    ("Error: An error occured while trying to initialize the database. " ++)
+    (\_ -> Env.reply "success")
+    env
 
 --- Routes the incoming request to the appropriate handler.
 route :: Env -> IO ()

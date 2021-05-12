@@ -161,7 +161,8 @@ getByMeasured measured =
      "INNER JOIN Event       ON Event.EntryEvent_entryKey       = Entry.Key " ++
      "INNER JOIN Action      ON Action.EntryAction_entryKey     = Entry.Key " ++
      "INNER JOIN Measurement ON Measurement.EntryMeasurement_entryKey = Entry.Key " ++
-     "WHERE Measurement.EntryMeasurement_ofKey = '?';")
+     "WHERE Measurement.EntryMeasurement_ofKey = '?' " ++
+     "ORDER BY Event.Timestamp;")
     [SQLInt measured] [SQLTypeInt, SQLTypeDate, SQLTypeDate, SQLTypeInt, SQLTypeString, SQLTypeFloat, SQLTypeFloat] >+= from
   where  
     from :: [[SQLValue]] -> DBAction [Measurement]
