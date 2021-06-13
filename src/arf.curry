@@ -55,6 +55,18 @@ data Measurement = Measurement MeasurementID String Float Float EntryID EntryID
 data MeasurementID = MeasurementID Int
  deriving (Eq,Show,Read)
 
+data Meal = Meal MealID Float String EntryID
+ deriving (Eq,Show,Read)
+
+data MealID = MealID Int
+ deriving (Eq,Show,Read)
+
+data Serving = Serving ServingID String Int EntryID
+ deriving (Eq,Show,Read)
+
+data ServingID = ServingID Int
+ deriving (Eq,Show,Read)
+
 --- The name of the SQLite database file.
 sqliteDBFile :: String
 sqliteDBFile = "data/Arf.sqlite"
@@ -1177,6 +1189,345 @@ deleteMeasurement =
 updateMeasurement :: Measurement -> Database.CDBI.Connection.DBAction ()
 updateMeasurement = Database.CDBI.ER.updateEntry measurement_CDBI_Description
 
+--- The ER description of the `Meal` entity.
+meal_CDBI_Description :: Database.CDBI.Description.EntityDescription Meal
+meal_CDBI_Description =
+  Database.CDBI.Description.ED "Meal"
+   [Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeFloat
+   ,Database.CDBI.Connection.SQLTypeString
+   ,Database.CDBI.Connection.SQLTypeInt]
+   (\(Meal (MealID key) calories description (EntryID entryMeal_entryKey)) ->
+     [Database.CDBI.Connection.SQLInt key
+     ,Database.CDBI.Connection.SQLFloat calories
+     ,Database.CDBI.Connection.SQLString description
+     ,Database.CDBI.Connection.SQLInt entryMeal_entryKey])
+   (\(Meal _ calories description (EntryID entryMeal_entryKey)) ->
+     [Database.CDBI.Connection.SQLNull
+     ,Database.CDBI.Connection.SQLFloat calories
+     ,Database.CDBI.Connection.SQLString description
+     ,Database.CDBI.Connection.SQLInt entryMeal_entryKey])
+   (\[Database.CDBI.Connection.SQLInt key
+     ,Database.CDBI.Connection.SQLFloat calories
+     ,Database.CDBI.Connection.SQLString description
+     ,Database.CDBI.Connection.SQLInt entryMeal_entryKey] ->
+     Meal (MealID key) calories description (EntryID entryMeal_entryKey))
+
+--- The database table of the `Meal` entity.
+mealTable :: Database.CDBI.Description.Table
+mealTable = "Meal"
+
+--- The database column `Key` of the `Meal` entity.
+mealColumnKey :: Database.CDBI.Description.Column MealID
+mealColumnKey = Database.CDBI.Description.Column "\"Key\"" "\"Meal\".\"Key\""
+
+--- The database column `Calories` of the `Meal` entity.
+mealColumnCalories :: Database.CDBI.Description.Column Float
+mealColumnCalories =
+  Database.CDBI.Description.Column "\"Calories\"" "\"Meal\".\"Calories\""
+
+--- The database column `Description` of the `Meal` entity.
+mealColumnDescription :: Database.CDBI.Description.Column String
+mealColumnDescription =
+  Database.CDBI.Description.Column "\"Description\"" "\"Meal\".\"Description\""
+
+--- The database column `EntryMeal_entryKey` of the `Meal` entity.
+mealColumnEntryMeal_entryKey :: Database.CDBI.Description.Column EntryID
+mealColumnEntryMeal_entryKey =
+  Database.CDBI.Description.Column "\"EntryMeal_entryKey\""
+   "\"Meal\".\"EntryMeal_entryKey\""
+
+--- The description of the database column `Key` of the `Meal` entity.
+mealKeyColDesc :: Database.CDBI.Description.ColumnDescription MealID
+mealKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Meal\".\"Key\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\(MealID key) -> Database.CDBI.Connection.SQLInt key)
+   (\(Database.CDBI.Connection.SQLInt key) -> MealID key)
+
+--- The description of the database column `Calories` of the `Meal` entity.
+mealCaloriesColDesc :: Database.CDBI.Description.ColumnDescription Float
+mealCaloriesColDesc =
+  Database.CDBI.Description.ColDesc "\"Meal\".\"Calories\""
+   Database.CDBI.Connection.SQLTypeFloat
+   (\calories -> Database.CDBI.Connection.SQLFloat calories)
+   (\(Database.CDBI.Connection.SQLFloat calories) -> calories)
+
+--- The description of the database column `Description` of the `Meal` entity.
+mealDescriptionColDesc :: Database.CDBI.Description.ColumnDescription String
+mealDescriptionColDesc =
+  Database.CDBI.Description.ColDesc "\"Meal\".\"Description\""
+   Database.CDBI.Connection.SQLTypeString
+   (\description -> Database.CDBI.Connection.SQLString description)
+   (\(Database.CDBI.Connection.SQLString description) -> description)
+
+--- The description of the database column `EntryMeal_entryKey` of the `Meal` entity.
+mealEntryMeal_entryKeyColDesc
+  :: Database.CDBI.Description.ColumnDescription EntryID
+mealEntryMeal_entryKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Meal\".\"EntryMeal_entryKey\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\(EntryID entryMeal_entryKey) ->
+     Database.CDBI.Connection.SQLInt entryMeal_entryKey)
+   (\(Database.CDBI.Connection.SQLInt entryMeal_entryKey) ->
+     EntryID entryMeal_entryKey)
+
+--- Gets the attribute `Key` of the `Meal` entity.
+mealKey :: Meal -> MealID
+mealKey (Meal a _ _ _) = a
+
+--- Gets the attribute `Calories` of the `Meal` entity.
+mealCalories :: Meal -> Float
+mealCalories (Meal _ a _ _) = a
+
+--- Gets the attribute `Description` of the `Meal` entity.
+mealDescription :: Meal -> String
+mealDescription (Meal _ _ a _) = a
+
+--- Gets the attribute `EntryMeal_entryKey` of the `Meal` entity.
+mealEntryMeal_entryKey :: Meal -> EntryID
+mealEntryMeal_entryKey (Meal _ _ _ a) = a
+
+--- Sets the attribute `Key` of the `Meal` entity.
+setMealKey :: Meal -> MealID -> Meal
+setMealKey (Meal _ b3 b2 b1) a = Meal a b3 b2 b1
+
+--- Sets the attribute `Calories` of the `Meal` entity.
+setMealCalories :: Meal -> Float -> Meal
+setMealCalories (Meal a2 _ b2 b1) a = Meal a2 a b2 b1
+
+--- Sets the attribute `Description` of the `Meal` entity.
+setMealDescription :: Meal -> String -> Meal
+setMealDescription (Meal a3 a2 _ b1) a = Meal a3 a2 a b1
+
+--- Sets the attribute `EntryMeal_entryKey` of the `Meal` entity.
+setMealEntryMeal_entryKey :: Meal -> EntryID -> Meal
+setMealEntryMeal_entryKey (Meal a4 a3 a2 _) a = Meal a4 a3 a2 a
+
+--- id-to-value function for entity `Meal`.
+mealID :: MealID -> Database.CDBI.Criteria.Value MealID
+mealID (MealID key) = Database.CDBI.Criteria.idVal key
+
+--- id-to-int function for entity `Meal`.
+mealKeyToInt :: MealID -> Int
+mealKeyToInt (MealID key) = key
+
+--- Shows the key of a `Meal` entity as a string.
+--- This is useful if a textual representation of the key is necessary
+--- (e.g., as URL parameters in web pages), but it should no be used
+--- to store keys in other attributes!
+showMealKey :: Meal -> String
+showMealKey entry =
+  Database.CDBI.ER.showDatabaseKey "Meal" mealKeyToInt (mealKey entry)
+
+--- Transforms a string into a key of a `Meal` entity.
+--- Nothing is returned if the string does not represent a meaningful key.
+readMealKey :: String -> Maybe MealID
+readMealKey = Database.CDBI.ER.readDatabaseKey "Meal" MealID
+
+--- Gets all `Meal` entities.
+queryAllMeals :: Database.CDBI.Connection.DBAction [Meal]
+queryAllMeals = Database.CDBI.ER.getAllEntries meal_CDBI_Description
+
+--- Gets all `Meal` entities satisfying a given predicate.
+queryCondMeal :: (Meal -> Bool) -> Database.CDBI.Connection.DBAction [Meal]
+queryCondMeal = Database.CDBI.ER.getCondEntries meal_CDBI_Description
+
+--- Gets a `Meal` entry by a given key.
+getMeal :: MealID -> Database.CDBI.Connection.DBAction Meal
+getMeal =
+  Database.CDBI.ER.getEntryWithKey meal_CDBI_Description mealColumnKey mealID
+
+--- Inserts a new `Meal` entity.
+newMealWithEntryMeal_entryKey
+  :: Float -> String -> EntryID -> Database.CDBI.Connection.DBAction Meal
+newMealWithEntryMeal_entryKey calories_p description_p entryMeal_entryKey_p =
+  Database.CDBI.ER.insertNewEntry meal_CDBI_Description setMealKey MealID
+   (Meal (MealID 0) calories_p description_p entryMeal_entryKey_p)
+
+--- Deletes an existing `Meal` entry by its key.
+deleteMeal :: Meal -> Database.CDBI.Connection.DBAction ()
+deleteMeal =
+  Database.CDBI.ER.deleteEntry meal_CDBI_Description mealColumnKey
+   (mealID . mealKey)
+
+--- Updates an existing `Meal` entry by its key.
+updateMeal :: Meal -> Database.CDBI.Connection.DBAction ()
+updateMeal = Database.CDBI.ER.updateEntry meal_CDBI_Description
+
+--- The ER description of the `Serving` entity.
+serving_CDBI_Description :: Database.CDBI.Description.EntityDescription Serving
+serving_CDBI_Description =
+  Database.CDBI.Description.ED "Serving"
+   [Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeString
+   ,Database.CDBI.Connection.SQLTypeInt
+   ,Database.CDBI.Connection.SQLTypeInt]
+   (\(Serving
+       (ServingID key) servingType amount (EntryID entryServing_mealKey)) ->
+     [Database.CDBI.Connection.SQLInt key
+     ,Database.CDBI.Connection.SQLString servingType
+     ,Database.CDBI.Connection.SQLInt amount
+     ,Database.CDBI.Connection.SQLInt entryServing_mealKey])
+   (\(Serving _ servingType amount (EntryID entryServing_mealKey)) ->
+     [Database.CDBI.Connection.SQLNull
+     ,Database.CDBI.Connection.SQLString servingType
+     ,Database.CDBI.Connection.SQLInt amount
+     ,Database.CDBI.Connection.SQLInt entryServing_mealKey])
+   (\[Database.CDBI.Connection.SQLInt key
+     ,Database.CDBI.Connection.SQLString servingType
+     ,Database.CDBI.Connection.SQLInt amount
+     ,Database.CDBI.Connection.SQLInt entryServing_mealKey] ->
+     Serving (ServingID key) servingType amount (EntryID entryServing_mealKey))
+
+--- The database table of the `Serving` entity.
+servingTable :: Database.CDBI.Description.Table
+servingTable = "Serving"
+
+--- The database column `Key` of the `Serving` entity.
+servingColumnKey :: Database.CDBI.Description.Column ServingID
+servingColumnKey =
+  Database.CDBI.Description.Column "\"Key\"" "\"Serving\".\"Key\""
+
+--- The database column `ServingType` of the `Serving` entity.
+servingColumnServingType :: Database.CDBI.Description.Column String
+servingColumnServingType =
+  Database.CDBI.Description.Column "\"ServingType\""
+   "\"Serving\".\"ServingType\""
+
+--- The database column `Amount` of the `Serving` entity.
+servingColumnAmount :: Database.CDBI.Description.Column Int
+servingColumnAmount =
+  Database.CDBI.Description.Column "\"Amount\"" "\"Serving\".\"Amount\""
+
+--- The database column `EntryServing_mealKey` of the `Serving` entity.
+servingColumnEntryServing_mealKey :: Database.CDBI.Description.Column EntryID
+servingColumnEntryServing_mealKey =
+  Database.CDBI.Description.Column "\"EntryServing_mealKey\""
+   "\"Serving\".\"EntryServing_mealKey\""
+
+--- The description of the database column `Key` of the `Serving` entity.
+servingKeyColDesc :: Database.CDBI.Description.ColumnDescription ServingID
+servingKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Serving\".\"Key\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\(ServingID key) -> Database.CDBI.Connection.SQLInt key)
+   (\(Database.CDBI.Connection.SQLInt key) -> ServingID key)
+
+--- The description of the database column `ServingType` of the `Serving` entity.
+servingServingTypeColDesc :: Database.CDBI.Description.ColumnDescription String
+servingServingTypeColDesc =
+  Database.CDBI.Description.ColDesc "\"Serving\".\"ServingType\""
+   Database.CDBI.Connection.SQLTypeString
+   (\servingType -> Database.CDBI.Connection.SQLString servingType)
+   (\(Database.CDBI.Connection.SQLString servingType) -> servingType)
+
+--- The description of the database column `Amount` of the `Serving` entity.
+servingAmountColDesc :: Database.CDBI.Description.ColumnDescription Int
+servingAmountColDesc =
+  Database.CDBI.Description.ColDesc "\"Serving\".\"Amount\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\amount -> Database.CDBI.Connection.SQLInt amount)
+   (\(Database.CDBI.Connection.SQLInt amount) -> amount)
+
+--- The description of the database column `EntryServing_mealKey` of the `Serving` entity.
+servingEntryServing_mealKeyColDesc
+  :: Database.CDBI.Description.ColumnDescription EntryID
+servingEntryServing_mealKeyColDesc =
+  Database.CDBI.Description.ColDesc "\"Serving\".\"EntryServing_mealKey\""
+   Database.CDBI.Connection.SQLTypeInt
+   (\(EntryID entryServing_mealKey) ->
+     Database.CDBI.Connection.SQLInt entryServing_mealKey)
+   (\(Database.CDBI.Connection.SQLInt entryServing_mealKey) ->
+     EntryID entryServing_mealKey)
+
+--- Gets the attribute `Key` of the `Serving` entity.
+servingKey :: Serving -> ServingID
+servingKey (Serving a _ _ _) = a
+
+--- Gets the attribute `ServingType` of the `Serving` entity.
+servingServingType :: Serving -> String
+servingServingType (Serving _ a _ _) = a
+
+--- Gets the attribute `Amount` of the `Serving` entity.
+servingAmount :: Serving -> Int
+servingAmount (Serving _ _ a _) = a
+
+--- Gets the attribute `EntryServing_mealKey` of the `Serving` entity.
+servingEntryServing_mealKey :: Serving -> EntryID
+servingEntryServing_mealKey (Serving _ _ _ a) = a
+
+--- Sets the attribute `Key` of the `Serving` entity.
+setServingKey :: Serving -> ServingID -> Serving
+setServingKey (Serving _ b3 b2 b1) a = Serving a b3 b2 b1
+
+--- Sets the attribute `ServingType` of the `Serving` entity.
+setServingServingType :: Serving -> String -> Serving
+setServingServingType (Serving a2 _ b2 b1) a = Serving a2 a b2 b1
+
+--- Sets the attribute `Amount` of the `Serving` entity.
+setServingAmount :: Serving -> Int -> Serving
+setServingAmount (Serving a3 a2 _ b1) a = Serving a3 a2 a b1
+
+--- Sets the attribute `EntryServing_mealKey` of the `Serving` entity.
+setServingEntryServing_mealKey :: Serving -> EntryID -> Serving
+setServingEntryServing_mealKey (Serving a4 a3 a2 _) a = Serving a4 a3 a2 a
+
+--- id-to-value function for entity `Serving`.
+servingID :: ServingID -> Database.CDBI.Criteria.Value ServingID
+servingID (ServingID key) = Database.CDBI.Criteria.idVal key
+
+--- id-to-int function for entity `Serving`.
+servingKeyToInt :: ServingID -> Int
+servingKeyToInt (ServingID key) = key
+
+--- Shows the key of a `Serving` entity as a string.
+--- This is useful if a textual representation of the key is necessary
+--- (e.g., as URL parameters in web pages), but it should no be used
+--- to store keys in other attributes!
+showServingKey :: Serving -> String
+showServingKey entry =
+  Database.CDBI.ER.showDatabaseKey "Serving" servingKeyToInt (servingKey entry)
+
+--- Transforms a string into a key of a `Serving` entity.
+--- Nothing is returned if the string does not represent a meaningful key.
+readServingKey :: String -> Maybe ServingID
+readServingKey = Database.CDBI.ER.readDatabaseKey "Serving" ServingID
+
+--- Gets all `Serving` entities.
+queryAllServings :: Database.CDBI.Connection.DBAction [Serving]
+queryAllServings = Database.CDBI.ER.getAllEntries serving_CDBI_Description
+
+--- Gets all `Serving` entities satisfying a given predicate.
+queryCondServing
+  :: (Serving -> Bool) -> Database.CDBI.Connection.DBAction [Serving]
+queryCondServing = Database.CDBI.ER.getCondEntries serving_CDBI_Description
+
+--- Gets a `Serving` entry by a given key.
+getServing :: ServingID -> Database.CDBI.Connection.DBAction Serving
+getServing =
+  Database.CDBI.ER.getEntryWithKey serving_CDBI_Description servingColumnKey
+   servingID
+
+--- Inserts a new `Serving` entity.
+newServingWithEntryServing_mealKey
+  :: String -> Int -> EntryID -> Database.CDBI.Connection.DBAction Serving
+newServingWithEntryServing_mealKey
+    servingType_p amount_p entryServing_mealKey_p =
+  Database.CDBI.ER.insertNewEntry serving_CDBI_Description setServingKey
+   ServingID
+   (Serving (ServingID 0) servingType_p amount_p entryServing_mealKey_p)
+
+--- Deletes an existing `Serving` entry by its key.
+deleteServing :: Serving -> Database.CDBI.Connection.DBAction ()
+deleteServing =
+  Database.CDBI.ER.deleteEntry serving_CDBI_Description servingColumnKey
+   (servingID . servingKey)
+
+--- Updates an existing `Serving` entry by its key.
+updateServing :: Serving -> Database.CDBI.Connection.DBAction ()
+updateServing = Database.CDBI.ER.updateEntry serving_CDBI_Description
+
 --- Generates a new database (name provided as the parameter) and
 --- creates its schema.
 createNewDB :: String -> IO ()
@@ -1193,7 +1544,9 @@ createNewDB dbfile =
        ,"create table 'Attrib'('Key' integer primary key ,'EntryAttrib_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryAttrib_subjectKey' int REFERENCES 'Entry'(Key) not null);"
        ,"create table 'Action'('Key' integer primary key ,'EntryAction_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryAction_subjectKey' int REFERENCES 'Entry'(Key) not null);"
        ,"create table 'Activity'('Key' integer primary key ,'Duration' string not null ,'EntryActivity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
-       ,"create table 'Measurement'('Key' integer primary key ,'Unit' string not null ,'Value' float not null ,'Precision' float not null ,'EntryMeasurement_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryMeasurement_ofKey' int REFERENCES 'Entry'(Key) not null);"]
+       ,"create table 'Measurement'('Key' integer primary key ,'Unit' string not null ,'Value' float not null ,'Precision' float not null ,'EntryMeasurement_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryMeasurement_ofKey' int REFERENCES 'Entry'(Key) not null);"
+       ,"create table 'Meal'('Key' integer primary key ,'Calories' float not null ,'Description' string not null ,'EntryMeal_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
+       ,"create table 'Serving'('Key' integer primary key ,'ServingType' string not null ,'Amount' not null ,'EntryServing_mealKey' int REFERENCES 'Entry'(Key) not null);"]
 
 --- Saves complete database as term files into an existing directory
 --- provided as a parameter.
@@ -1206,6 +1559,8 @@ saveDBTo dir =
      Database.CDBI.ER.saveDBTerms action_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms activity_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.saveDBTerms measurement_CDBI_Description sqliteDBFile dir
+     Database.CDBI.ER.saveDBTerms meal_CDBI_Description sqliteDBFile dir
+     Database.CDBI.ER.saveDBTerms serving_CDBI_Description sqliteDBFile dir
 
 --- Restores complete database from term files which are stored
 --- in a directory provided as a parameter.
@@ -1219,6 +1574,8 @@ restoreDBFrom dir =
      Database.CDBI.ER.restoreDBTerms activity_CDBI_Description sqliteDBFile dir
      Database.CDBI.ER.restoreDBTerms measurement_CDBI_Description sqliteDBFile
       dir
+     Database.CDBI.ER.restoreDBTerms meal_CDBI_Description sqliteDBFile dir
+     Database.CDBI.ER.restoreDBTerms serving_CDBI_Description sqliteDBFile dir
 
 --- Runs a DB action (typically a query).
 runQ :: Database.CDBI.Connection.DBAction a -> IO a

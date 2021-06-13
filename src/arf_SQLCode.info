@@ -1,5 +1,9 @@
 SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
- [(("Entry","of","Measurement"),SQLParserInfoType.OnetoN "Measurement_of")
+ [(("Entry","meal","Serving"),SQLParserInfoType.OnetoN "Serving_meal")
+ ,(("Serving","serving","Entry"),SQLParserInfoType.NtoOne "Serving_meal")
+ ,(("Entry","entry","Meal"),SQLParserInfoType.OnetoN "Meal_entry")
+ ,(("Meal","meal","Entry"),SQLParserInfoType.NtoOne "Meal_entry")
+ ,(("Entry","of","Measurement"),SQLParserInfoType.OnetoN "Measurement_of")
  ,(("Measurement","measurement","Entry")
   ,SQLParserInfoType.NtoOne "Measurement_of")
  ,(("Entry","entry","Measurement"),SQLParserInfoType.OnetoN "Measurement_entry")
@@ -41,7 +45,15 @@ SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
  ,("measurementValue",False)
  ,("measurementPrecision",False)
  ,("measurementEntryMeasurement_entryKey",False)
- ,("measurementEntryMeasurement_ofKey",False)]
+ ,("measurementEntryMeasurement_ofKey",False)
+ ,("mealKey",False)
+ ,("mealCalories",False)
+ ,("mealDescription",False)
+ ,("mealEntryMeal_entryKey",False)
+ ,("servingKey",False)
+ ,("servingServingType",False)
+ ,("servingAmount",False)
+ ,("servingEntryServing_mealKey",False)]
  [("entry",("Entry",["Key","Timestamp"]))
  ,("entity",("Entity",["Key","Name","EntryEntity_entryKey"]))
  ,("event",("Event",["Key","Timestamp","EntryEvent_entryKey"]))
@@ -55,7 +67,9 @@ SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
     ,"Value"
     ,"Precision"
     ,"EntryMeasurement_entryKey"
-    ,"EntryMeasurement_ofKey"]))]
+    ,"EntryMeasurement_ofKey"]))
+ ,("meal",("Meal",["Key","Calories","Description","EntryMeal_entryKey"]))
+ ,("serving",("Serving",["Key","ServingType","Amount","EntryServing_mealKey"]))]
  [("entryKey","Entry")
  ,("entryTimestamp","date")
  ,("entityKey","Entity")
@@ -78,4 +92,12 @@ SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
  ,("measurementValue","float")
  ,("measurementPrecision","float")
  ,("measurementEntryMeasurement_entryKey","Entry")
- ,("measurementEntryMeasurement_ofKey","Entry")]
+ ,("measurementEntryMeasurement_ofKey","Entry")
+ ,("mealKey","Meal")
+ ,("mealCalories","float")
+ ,("mealDescription","string")
+ ,("mealEntryMeal_entryKey","Entry")
+ ,("servingKey","Serving")
+ ,("servingServingType","string")
+ ,("servingAmount","int")
+ ,("servingEntryServing_mealKey","Entry")]

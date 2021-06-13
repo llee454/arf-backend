@@ -14,7 +14,14 @@ arf =
      Entity "Measurement" [
        Attribute "Unit" (StringDom Nothing) NoKey False,
        Attribute "Value" (FloatDom Nothing) NoKey False,
-       Attribute "Precision" (FloatDom Nothing) NoKey False]
+       Attribute "Precision" (FloatDom Nothing) NoKey False],
+     -- Nutrition Utility Entities
+     Entity "Meal" [
+       Attribute "Calories" (FloatDom Nothing) NoKey False,
+       Attribute "Description" (StringDom Nothing) NoKey False],
+     Entity "Serving" [
+       Attribute "ServingType" (StringDom Nothing) NoKey False,
+       Attribute "Amount" (IntDom Nothing) NoKey False]
    ]
    [
      Relationship "Entity_entry" [
@@ -43,5 +50,12 @@ arf =
        REnd "Entry" "is_measurement" (Exactly 1)],
      Relationship "Measurement_of" [
        REnd "Measurement" "of" (Between 0 Infinite),
-       REnd "Entry" "measurement" (Exactly 1)]
+       REnd "Entry" "measurement" (Exactly 1)],
+     -- Nutrition Utility Entity Relations
+     Relationship "Meal_entry" [
+       REnd "Meal" "entry" (Between 0 (Max 1)),
+       REnd "Entry" "meal" (Exactly 1)],
+     Relationship "Serving_meal" [
+       REnd "Serving" "meal" (Between 0 Infinite),
+       REnd "Entry" "serving" (Exactly 1)]
    ]

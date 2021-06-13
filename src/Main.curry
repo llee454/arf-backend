@@ -22,6 +22,7 @@ import Attribute
 import Entity
 import Event
 import qualified Measurement
+import qualified Nutrition
 
 import qualified Health
 
@@ -39,6 +40,7 @@ handlers = [
     ("health",      Health.handler), 
     ("init",        const init),
     ("measurement", Measurement.handler),
+    ("nutrition",   Nutrition.handler),
     ("status",      const (reply "Available")),
     ("version",     const (reply "1.0.0"))
   ]

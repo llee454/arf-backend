@@ -30,8 +30,24 @@
             Attribute "Value" (FloatDom Nothing) NoKey False,
             Attribute "Precision" (FloatDom Nothing) NoKey False,
             Attribute "EntryMeasurement_entryKey" (KeyDom "Entry") Unique False,
-            Attribute "EntryMeasurement_ofKey" (KeyDom "Entry") NoKey False]]
-   [Relationship "Measurement_of"
+            Attribute "EntryMeasurement_ofKey" (KeyDom "Entry") NoKey False],
+    Entity "Meal"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "Calories" (FloatDom Nothing) NoKey False,
+            Attribute "Description" (StringDom Nothing) NoKey False,
+            Attribute "EntryMeal_entryKey" (KeyDom "Entry") Unique False],
+    Entity "Serving"
+           [Attribute "Key" (IntDom Nothing) PKey False,
+            Attribute "ServingType" (StringDom Nothing) NoKey False,
+            Attribute "Amount" (IntDom Nothing) NoKey False,
+            Attribute "EntryServing_mealKey" (KeyDom "Entry") NoKey False]]
+   [Relationship "Serving_meal"
+                 [REnd "Serving" "meal" (Between 0 Infinite),
+                  REnd "Entry" "serving" (Exactly 1)],
+    Relationship "Meal_entry"
+                 [REnd "Meal" "entry" (Between 0 (Max 1)),
+                  REnd "Entry" "meal" (Exactly 1)],
+    Relationship "Measurement_of"
                  [REnd "Measurement" "of" (Between 0 Infinite),
                   REnd "Entry" "measurement" (Exactly 1)],
     Relationship "Measurement_entry"
