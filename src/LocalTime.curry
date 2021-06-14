@@ -68,4 +68,6 @@ main = do
   lt <- toLocalTime $ fromPosix ts
   putStrLn $ "posix timestamp: " ++ show (fromPosix ts)
   putStrLn $ "Current UTC Time: " ++ toISO8601 (fromPosix $ ts)
+  putStrLn $ "Current Local Time: " ++ toISO8601 (toEST lt)
   putStrLn $ "Current EST Time: " ++ toISO8601 (toEST lt)
+  putStrLn $ "Current EDT Time: " ++ toISO8601 (toEST lt)
