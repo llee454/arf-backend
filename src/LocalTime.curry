@@ -33,19 +33,12 @@ data DateTime = DateTime {
 fromPosix :: Int -> DateTime
 fromPosix external
 
+--- Accepts a timezone description and transforms the given UTC time
+--- into the local time for the timezone.
 toTimeZone :: TimeZone -> DateTime -> DateTime
 toTimeZone tz (DateTime d t) =
   let (n, u) = utcToLocalTimeOfDay tz t in
   DateTime (n + d) u
-
---- Accepts a DateTime in UTC and returns an equivalent DateTime in EST.
-toEST :: DateTime -> DateTime 
-toEST = toTimeZone $ readTimeZone "EST"
-
---- Accepts a DateTime in UTC and returns an equivalent DateTime in EDT
---- (Eastern Daylight Time).
-toEDT :: DateTime -> DateTime 
-toEDT = toTimeZone $ readTimeZone "EDT"
 
 --- Accepts two arguments: path, a file path that references a binary
 --- Olson timezone file (usually /etc/localtime); dateTime, the current
@@ -53,22 +46,29 @@ toEDT = toTimeZone $ readTimeZone "EDT"
 getTimeZonePath :: String -> DateTime -> IO TimeZone
 getTimeZonePath external
 
-getTimeZone :: DateTime -> IO TimeZone
-getTimeZone = getTimeZonePath "/usr/share/zoneinfo/America/New_York"
-
-toLocalTime :: DateTime -> IO DateTime
-toLocalTime d = getTimeZone d >>= \tz -> return $ toTimeZone tz d
-
+--- Accepts a date time and returns an equivalent time string in
+--- ISO8601 format.
 toISO8601 :: DateTime -> String
 toISO8601 external
 
+--- The default path to the Olson timezone file for the
+--- America/New_York timezone.
+newYorkTimeZonePath = "/usr/share/zoneinfo/America/New_York"
+
+--- Accepts a Unit/Posix timestamp and returns a string giving the
+--- equivalent local time in New York.
+getNewYorkTime :: DateTime -> IO String
+getNewYorkTime t = do
+  tz <- getTimeZonePath newYorkTimeZonePath t
+  return $ toISO8601 $ toTimeZone tz t
+
+--- Returns the current Posix time.
+getCurrPosixTime :: IO Int
+getCurrPosixTime = getClockTime >>= return . clockTimeToInt
+
 main :: IO ()
 main = do
-  ts <- getClockTime >>= return . clockTimeToInt
-  lt <- toLocalTime $fromPosix ts
-  t <- return $ fromPosix ts
-  putStrLn $ "posix timestamp: " ++ show (fromPosix ts)
-  putStrLn $ "Current UTC Time: " ++ toISO8601 (fromPosix $ ts)
-  putStrLn $ "Current Local Time: " ++ toISO8601 lt
-  putStrLn $ "Current EST Time: " ++ toISO8601 (toEST t)
-  putStrLn $ "Current EDT Time: " ++ toISO8601 (toEDT t)
+  t <- getCurrPosixTime >>= return . fromPosix
+  lt <- getNewYorkTime t
+  putStrLn $ "posix timestamp: " ++ show t
+  putStrLn $ "Current Local Time (New York): " ++ lt
