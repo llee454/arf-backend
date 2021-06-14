@@ -54,7 +54,7 @@ getTimeZonePath :: String -> DateTime -> IO TimeZone
 getTimeZonePath external
 
 getTimeZone :: DateTime -> IO TimeZone
-getTimeZone = getTimeZonePath "/etc/localtime"
+getTimeZone = getTimeZonePath "/usr/share/zoneinfo/America/New_York" -- "/etc/localtime"
 
 toLocalTime :: DateTime -> IO DateTime
 toLocalTime d = getTimeZone d >>= \tz -> return $ toTimeZone tz d
