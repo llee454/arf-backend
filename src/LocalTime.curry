@@ -50,14 +50,14 @@ toEDT = toTimeZone $ readTimeZone "EDT"
 --- Accepts two arguments: path, a file path that references a binary
 --- Olson timezone file (usually /etc/localtime); dateTime, the current
 --- time; and returns a timezone.
-getTimeZonePath :: String -> DateTime -> TimeZone
+getTimeZonePath :: String -> DateTime -> IO TimeZone
 getTimeZonePath external
 
-getTimeZone :: DateTime -> TimeZone
+getTimeZone :: DateTime -> IO TimeZone
 getTimeZone = getTimeZonePath "/etc/localtime"
 
-toLocalTime :: DateTime -> DateTime
-toLocalTime d = toTimeZone (getTimeZone d) d
+toLocalTime :: DateTime -> IO DateTime
+toLocalTime d = getTimeZone d >>= \tz -> return $ toTimeZone tz d
 
 toISO8601 :: DateTime -> String
 toISO8601 external
@@ -65,6 +65,7 @@ toISO8601 external
 main :: IO ()
 main = do
   ts <- getClockTime >>= return . clockTimeToInt
+  lt <- toLocalTime $ fromPosix ts
   putStrLn $ "posix timestamp: " ++ show (fromPosix ts)
   putStrLn $ "Current UTC Time: " ++ toISO8601 (fromPosix $ ts)
-  putStrLn $ "Current EST Time: " ++ toISO8601 (toEST $ toLocalTime $ fromPosix ts)
+  putStrLn $ "Current EST Time: " ++ toISO8601 (toEST lt)

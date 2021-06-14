@@ -1,8 +1,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 import Data.Fixed
-import Data.Time.Clock
+import TimeNew.Data.Time.Clock
+import qualified TimeOld.Data.Time.Clock as TO
 import Data.Time.LocalTime
+import qualified TimeOld.Data.Time.LocalTime as OLT
 import Data.Time.Calendar
+import qualified TimeOld.Data.Time.Calendar as OC
 import Data.Time.Calendar.OrdinalDate
 import Data.Time.Clock.POSIX
 import Data.Time.Format
@@ -17,6 +20,16 @@ external_d_C_readTimeZone tz _ _ =
 
 toTimeZone :: C_TimeZone -> TimeZone
 toTimeZone (C_TimeZone mins summer name) = TimeZone ((fromCurry mins) :: Int) (fromCurry summer) (fromCurry name)
+
+toOldTimeZone :: C_TimeZone -> OLT.TimeZone
+toOldTimeZone (C_TimeZone mins summer name) = OLT.TimeZone ((fromCurry mins) :: Int) (fromCurry summer) (fromCurry name)
+
+fromOldTimeZone :: OLT.TimeZone -> C_TimeZone
+fromOldTimeZone (OLT.TimeZone mins summer name) = C_TimeZone (toCurry mins) (toCurry summer) (toCurry name)
+
+instance ConvertCurryHaskell C_TimeZone OLT.TimeZone where
+  fromCurry = toOldTimeZone
+  toCurry = fromOldTimeZone
 
 toTimeOfDay :: C_TimeOfDay -> TimeOfDay
 toTimeOfDay (C_TimeOfDay h m s) = TimeOfDay ((fromCurry h) :: Int) ((fromCurry m) :: Int) (fromInteger ((fromCurry s) :: Integer) :: Pico)
@@ -41,15 +54,24 @@ external_d_C_toISO8601 :: C_DateTime -> Cover -> ConstStore -> CP.OP_List CP.C_C
 external_d_C_toISO8601 d _ _ =
   toCurry $ formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" $ toLocalTime d
 
-toUTCTime :: C_DateTime -> UTCTime
+toUTCTime :: C_DateTime -> TO.UTCTime
 toUTCTime (C_DateTime d (C_TimeOfDay h m s)) =
-  let secs = 2 (((fromCurry h) :: Int) * 3600) + (((fromCurry m) :: Int) * 60) + ((fromCurry s) :: Int)
-    in UTCTime
-      (ModifiedJulianDay d)
-      (secondsToDiffTime secs)
+  let secs = (((fromCurry h) :: Integer) * 3600) + (((fromCurry m) :: Integer) * 60) + ((fromCurry s) :: Integer)
+    in TO.UTCTime
+      (OC.ModifiedJulianDay ((fromCurry d) :: Integer))
+      (TO.secondsToDiffTime secs)
 
-external_d_C_getTimeZonePath :: Curry_Prelude.OP_List Curry_Prelude.C_Char -> C_DateTime -> IO C_TimeZone
-external_d_C_getTimeZonePath path dateTime = do
+
+external_d_C_getTimeZonePath :: Curry_Prelude.OP_List Curry_Prelude.C_Char -> C_DateTime -> Cover -> ConstStore -> C_IO C_TimeZone
+external_d_C_getTimeZonePath path dateTime _ _ =
+  toCurry (getTimeZonePathAux (toUTCTime dateTime)) path 
+  where
+    getTimeZonePathAux :: TO.UTCTime -> String -> IO OLT.TimeZone
+    getTimeZonePathAux time path = do
+      tzSeries <- getTimeZoneSeriesFromOlsonFile path
+      return $ timeZoneFromSeries tzSeries time
+{-
   tzSeries <- getTimeZoneSeriesFromOlsonFile path
   let TimeZone m s n = timeZoneFromSeries tzSeries $ toUTCTime dateTime
-    in C_TimeZome (toCurry m) (toCurry s) (toCurry n)
+    in return $ C_TimeZome (toCurry m) (toCurry s) (toCurry n)
+-}
