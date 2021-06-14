@@ -47,9 +47,6 @@ toEST = toTimeZone $ readTimeZone "EST"
 toEDT :: DateTime -> DateTime 
 toEDT = toTimeZone $ readTimeZone "EDT"
 
-toNewYork :: DateTime -> DateTime
-toNewYork = toTimeZone $ readTimeZone "America/New_York"
-
 --- Accepts two arguments: path, a file path that references a binary
 --- Olson timezone file (usually /etc/localtime); dateTime, the current
 --- time; and returns a timezone.
@@ -57,7 +54,7 @@ getTimeZonePath :: String -> DateTime -> IO TimeZone
 getTimeZonePath external
 
 getTimeZone :: DateTime -> IO TimeZone
-getTimeZone = getTimeZonePath "/usr/share/zoneinfo/America/New_York" -- "/etc/localtime"
+getTimeZone = getTimeZonePath "/usr/share/zoneinfo/America/New_York"
 
 toLocalTime :: DateTime -> IO DateTime
 toLocalTime d = getTimeZone d >>= \tz -> return $ toTimeZone tz d
@@ -73,6 +70,5 @@ main = do
   putStrLn $ "posix timestamp: " ++ show (fromPosix ts)
   putStrLn $ "Current UTC Time: " ++ toISO8601 (fromPosix $ ts)
   putStrLn $ "Current Local Time: " ++ toISO8601 lt
-  putStrLn $ "Current NY Time: " ++ toISO8601 (toNewYork t)
   putStrLn $ "Current EST Time: " ++ toISO8601 (toEST t)
   putStrLn $ "Current EDT Time: " ++ toISO8601 (toEDT t)
