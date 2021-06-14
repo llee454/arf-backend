@@ -47,6 +47,9 @@ toEST = toTimeZone $ readTimeZone "EST"
 toEDT :: DateTime -> DateTime 
 toEDT = toTimeZone $ readTimeZone "EDT"
 
+toNewYork :: DateTime -> DateTime
+toNewYork = toTimeZone $ readTimeZone "America/New_York"
+
 --- Accepts two arguments: path, a file path that references a binary
 --- Olson timezone file (usually /etc/localtime); dateTime, the current
 --- time; and returns a timezone.
@@ -65,9 +68,11 @@ toISO8601 external
 main :: IO ()
 main = do
   ts <- getClockTime >>= return . clockTimeToInt
-  lt <- toLocalTime $ fromPosix ts
+  lt <- toLocalTime $fromPosix ts
+  t <- return $ fromPosix ts
   putStrLn $ "posix timestamp: " ++ show (fromPosix ts)
   putStrLn $ "Current UTC Time: " ++ toISO8601 (fromPosix $ ts)
-  putStrLn $ "Current Local Time: " ++ toISO8601 (toEST lt)
-  putStrLn $ "Current EST Time: " ++ toISO8601 (toEST lt)
-  putStrLn $ "Current EDT Time: " ++ toISO8601 (toEST lt)
+  putStrLn $ "Current Local Time: " ++ toISO8601 lt
+  putStrLn $ "Current NY Time: " ++ toISO8601 (toNewYork t)
+  putStrLn $ "Current EST Time: " ++ toISO8601 (toEST t)
+  putStrLn $ "Current EDT Time: " ++ toISO8601 (toEDT t)
