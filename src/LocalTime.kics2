@@ -40,12 +40,11 @@ external_d_C_utcToLocalTimeOfDay tz tod _ _ =
   let (days, TimeOfDay h m s) = utcToLocalTimeOfDay (toTimeZone tz) (toTimeOfDay tod)
     in CP.OP_Tuple2 (toCurry days) $ C_TimeOfDay (toCurry h) (toCurry m) (toCurry ((round s) :: Int))
 
-external_d_C_fromPosix :: CP.C_Int -> Cover -> ConstStore -> C_DateTime
-external_d_C_fromPosix ts _ _ =
-  let UTCTime d t = posixSecondsToUTCTime $ realToFrac $ ((fromCurry ts) :: Int)
-      TimeOfDay h m s = timeToTimeOfDay t
-    in C_DateTime (toCurry (toModifiedJulianDay d)) $
-         C_TimeOfDay (toCurry h) (toCurry m) (toCurry ((round s) :: Int))
+external_d_C_localToUTCTimeOfDay :: C_TimeZone -> C_TimeOfDay -> Cover -> ConstStore
+  -> Curry_Prelude.OP_Tuple2 Curry_Prelude.C_Int C_TimeOfDay
+external_d_C_localToUTCTimeOfDay tz tod _ _ =
+  let (days, TimeOfDay h m s) = localToUTCTimeOfDay (toTimeZone tz) (toTimeOfDay tod)
+    in CP.OP_Tuple2 (toCurry days) $ C_TimeOfDay (toCurry h) (toCurry m) (toCurry ((round s) :: Int))
 
 toLocalTime :: C_DateTime -> LocalTime
 toLocalTime (C_DateTime d t) = LocalTime (ModifiedJulianDay ((fromCurry d) :: Integer)) (toTimeOfDay t)
@@ -54,24 +53,36 @@ external_d_C_toISO8601 :: C_DateTime -> Cover -> ConstStore -> CP.OP_List CP.C_C
 external_d_C_toISO8601 d _ _ =
   toCurry $ formatTime defaultTimeLocale "%Y-%m-%d %H:%M:%S" $ toLocalTime d
 
-toUTCTime :: C_DateTime -> TO.UTCTime
-toUTCTime (C_DateTime d (C_TimeOfDay h m s)) =
+toOldUTCTime :: C_DateTime -> TO.UTCTime
+toOldUTCTime (C_DateTime d (C_TimeOfDay h m s)) =
   let secs = (((fromCurry h) :: Integer) * 3600) + (((fromCurry m) :: Integer) * 60) + ((fromCurry s) :: Integer)
     in TO.UTCTime
       (OC.ModifiedJulianDay ((fromCurry d) :: Integer))
       (TO.secondsToDiffTime secs)
 
+toUTCTime :: C_DateTime -> UTCTime
+toUTCTime (C_DateTime d (C_TimeOfDay h m s)) =
+  let secs = (((fromCurry h) :: Integer) * 3600) + (((fromCurry m) :: Integer) * 60) + ((fromCurry s) :: Integer)
+    in UTCTime
+      (ModifiedJulianDay ((fromCurry d) :: Integer))
+      (secondsToDiffTime secs)
+
+external_d_C_fromPosix :: CP.C_Int -> Cover -> ConstStore -> C_DateTime
+external_d_C_fromPosix ts _ _ =
+  let UTCTime d t = posixSecondsToUTCTime $ realToFrac $ ((fromCurry ts) :: Int)
+      TimeOfDay h m s = timeToTimeOfDay t
+    in C_DateTime (toCurry (toModifiedJulianDay d)) $
+         C_TimeOfDay (toCurry h) (toCurry m) (toCurry ((round s) :: Int))
+
+external_d_C_toPosix :: C_DateTime -> Cover -> ConstStore -> CP.C_Int
+external_d_C_toPosix t _ _ =
+  toCurry ((floor $ (1e12 *) $ nominalDiffTimeToSeconds $ utcTimeToPOSIXSeconds $ toUTCTime t) :: Int)
 
 external_d_C_getTimeZonePath :: Curry_Prelude.OP_List Curry_Prelude.C_Char -> C_DateTime -> Cover -> ConstStore -> C_IO C_TimeZone
 external_d_C_getTimeZonePath path dateTime _ _ =
-  toCurry (getTimeZonePathAux (toUTCTime dateTime)) path 
+  toCurry (getTimeZonePathAux (toOldUTCTime dateTime)) path 
   where
     getTimeZonePathAux :: TO.UTCTime -> String -> IO OLT.TimeZone
     getTimeZonePathAux time path = do
       tzSeries <- getTimeZoneSeriesFromOlsonFile path
       return $ timeZoneFromSeries tzSeries time
-{-
-  tzSeries <- getTimeZoneSeriesFromOlsonFile path
-  let TimeZone m s n = timeZoneFromSeries tzSeries $ toUTCTime dateTime
-    in return $ C_TimeZome (toCurry m) (toCurry s) (toCurry n)
--}
