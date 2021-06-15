@@ -9,6 +9,7 @@ import JSON.Data
 import JSON.Parser
 import JSON.Pretty
 import Time
+import LocalTime
 
 import Database.CDBI.ER
 import Database.CDBI.Criteria
@@ -163,6 +164,29 @@ readMeal k =
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read a meal from the database."
 
+--- Accepts an ISO8601 UTC date time and returns the IDs of meals that
+--- occured after the given date time.
+readMealsAfter :: String -> DBAction [Meal]
+readMealsAfter timestamp =
+  select
+    ("SELECT Entry.Key " ++
+     "FROM Entry " ++
+     "INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key " ++
+     "INNER JOIN Meal On Meal.EntryMeal_entryKey = Entry.Key " ++
+     "WHERE Event.Timestamp >= '?';")
+    [SQLString timestamp] [SQLTypeInt] >+= from
+  where
+    from :: [[SQLValue]] -> DBAction [Meal]
+    from res =
+      foldr
+        (\[SQLInt k] acc -> acc >+= \meals -> readMeal k >+= \(Just meal) -> returnDB $ Right (meal : meals))
+        (returnDB $ Right [])
+        res
+
+--- Return the set of meals eaten after midnight New York local time.
+readMealsToday :: IO (DBAction [Meal])
+readMealsToday = getMidnightISO8601 >>= return . readMealsAfter
+
 ---
 update :: Meal -> DBAction ()
 update meal =
@@ -189,4 +213,14 @@ entityIntf = EntityIntf {
 
 --- 
 handler :: [String] -> Env -> IO ()
-handler = EntityIntf.handler entityIntf $ EntityIntf.defaultHandler
+handler args env = do
+  req <- getContents
+  case args of
+    ["meals-today"] -> do
+      query <- readMealsToday
+      run (runInTransaction query)
+        ("Error: An error occured while trying to read the meals eaten today. " ++)
+        (Env.reply . ppJSON . JArray . map mealToJSON)
+        env
+    _ -> EntityIntf.handler entityIntf EntityIntf.defaultHandler args env
+        

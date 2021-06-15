@@ -83,20 +83,35 @@ getNewYorkTime t = do
 getCurrPosixTime :: IO Int
 getCurrPosixTime = getClockTime >>= return . clockTimeToInt
 
---- Returns the Unix/Posix timestamp for midnight (0:00) of the current day in New York local time.
-getMidnightPosixTime :: IO Int
-getMidnightPosixTime = do
+--- Returns the UTC time for midnight in New York local time.
+getMidnight :: IO DateTime
+getMidnight = do
   t <- getCurrPosixTime >>= return . fromPosix
   tz <- getTimeZonePath newYorkTimeZonePath t
   let DateTime n _ = toTimeZone tz t
       midnight     = DateTime n (TimeOfDay 0 0 0)
-    in return $ toPosix $ fromTimeZone tz midnight
+    in return $ fromTimeZone tz midnight
 
+
+--- Returns the UTC time for midnight in New York local time as an ISO
+--- 8601 string.
+getMidnightISO8601 :: IO String
+getMidnightISO8601 = getMidnight >>= return . toISO8601
+
+
+--- Returns the Unix/Posix timestamp (nanoseconds since 1970-01-01
+--- 00:00) for midnight (0:00) of the current day in New York local
+--- time.
+getMidnightPosix :: IO Int
+getMidnightPosix = getMidnight >>= return . toPosix
+
+{-
 main :: IO ()
 main = do
   t <- getCurrPosixTime >>= return . fromPosix
   lt <- getNewYorkTime t
-  m <- getMidnightPosixTime
+  m <- getMidnightPosix
   putStrLn $ "posix timestamp: " ++ show t
   putStrLn $ "Current Local Time (New York): " ++ lt
   putStrLn $ "Local Midnight UTC timestamp: " ++ show m
+-}
