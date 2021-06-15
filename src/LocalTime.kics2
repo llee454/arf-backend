@@ -76,7 +76,7 @@ external_d_C_fromPosix ts _ _ =
 
 external_d_C_toPosix :: C_DateTime -> Cover -> ConstStore -> CP.C_Int
 external_d_C_toPosix t _ _ =
-  toCurry ((floor $ (1e12 *) $ nominalDiffTimeToSeconds $ utcTimeToPOSIXSeconds $ toUTCTime t) :: Int)
+  toCurry ((floor $ (1e9 *) $ nominalDiffTimeToSeconds $ utcTimeToPOSIXSeconds $ toUTCTime t) :: Int)
 
 external_d_C_getTimeZonePath :: Curry_Prelude.OP_List Curry_Prelude.C_Char -> C_DateTime -> Cover -> ConstStore -> C_IO C_TimeZone
 external_d_C_getTimeZonePath path dateTime _ _ =
