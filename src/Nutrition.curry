@@ -214,7 +214,6 @@ entityIntf = EntityIntf {
 --- 
 handler :: [String] -> Env -> IO ()
 handler args env = do
-  req <- getContents
   case args of
     ["meals-today"] -> do
       query <- readMealsToday
