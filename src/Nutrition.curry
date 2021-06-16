@@ -8,7 +8,6 @@ import Maybe
 import JSON.Data
 import JSON.Parser
 import JSON.Pretty
-import Time
 import LocalTime
 
 import Database.CDBI.ER
@@ -42,8 +41,8 @@ servingOfJSON json =
 ---
 data Meal = Meal {
   key         :: Maybe Int,
-  created     :: ClockTime,
-  timestamp   :: ClockTime,
+  created     :: Int,
+  timestamp   :: Int,
   description :: String,
   calories    :: Float,
   servings    :: [Serving]}
@@ -60,8 +59,8 @@ mealOfJSON json =
       ("calories",    JNumber calories),
       ("servings",    JArray xs)]) ->
       maybeIntOfJSON k >>- \x -> Just $ Meal x
-        (clockTimeOfNum created)
-        (clockTimeOfNum timestamp)
+        (truncate created)
+        (truncate timestamp)
         description calories
         (mapMaybe servingOfJSON xs)
     _ -> Nothing
@@ -78,8 +77,8 @@ mealToJSON :: Meal -> JValue
 mealToJSON (Meal k created timestamp description calories servings) =
   JObject [
     ("key",         maybeIntToJSON k),
-    ("created",     clockTimeToJSON created),
-    ("timestamp",   clockTimeToJSON timestamp),
+    ("created",     JNumber $ i2f $ created),
+    ("timestamp",   JNumber $ i2f $ timestamp),
     ("description", JString description),
     ("calories",    JNumber calories),
     ("servings",    JArray $ map servingToJSON servings)]
@@ -154,19 +153,19 @@ readMeal k =
        "INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key " ++
        "INNER JOIN Meal On Meal.EntryMeal_entryKey = Entry.Key " ++
        "WHERE Entry.Key = '?';")
-      [SQLInt k] [SQLTypeDate, SQLTypeDate, SQLTypeFloat, SQLTypeString] >+= from servings)
+      [SQLInt k] [SQLTypeInt, SQLTypeInt, SQLTypeFloat, SQLTypeString] >+= from servings)
   where
     from :: [Serving] -> [[SQLValue]] -> DBAction (Maybe Meal)
     from servings res =
       case res of
-        [[SQLDate created, SQLDate timestamp, SQLFloat calories, SQLString description]] ->
+        [[SQLInt created, SQLInt timestamp, SQLFloat calories, SQLString description]] ->
           returnDB $ Right $ Just $ Meal (Just k) created timestamp description calories servings
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read a meal from the database."
 
 --- Accepts an ISO8601 UTC date time and returns the IDs of meals that
 --- occured after the given date time.
-readMealsAfter :: String -> DBAction [Meal]
+readMealsAfter :: Int -> DBAction [Meal]
 readMealsAfter timestamp =
   select
     ("SELECT Entry.Key " ++
@@ -174,7 +173,7 @@ readMealsAfter timestamp =
      "INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key " ++
      "INNER JOIN Meal On Meal.EntryMeal_entryKey = Entry.Key " ++
      "WHERE Event.Timestamp >= '?';")
-    [SQLString timestamp] [SQLTypeInt] >+= from
+    [SQLInt timestamp] [SQLTypeInt] >+= from
   where
     from :: [[SQLValue]] -> DBAction [Meal]
     from res =
@@ -185,7 +184,7 @@ readMealsAfter timestamp =
 
 --- Return the set of meals eaten after midnight New York local time.
 readMealsToday :: IO (DBAction [Meal])
-readMealsToday = getMidnightISO8601 >>= return . readMealsAfter
+readMealsToday = getMidnightPosix >>= return . readMealsAfter
 
 ---
 update :: Meal -> DBAction ()
@@ -194,8 +193,8 @@ update meal =
     Meal (Just k) created timestamp description calories servings ->
       deleteServings k >+
       insertServings k servings >+
-      execute "UPDATE Entry SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
-      execute "UPDATE Event SET Timestamp = '?' WHERE EntryEvent_entryKey = '?';" [SQLDate timestamp, SQLInt k] >+
+      execute "UPDATE Entry SET Timestamp = '?' WHERE Key = '?';" [SQLInt created, SQLInt k] >+
+      execute "UPDATE Event SET Timestamp = '?' WHERE EntryEvent_entryKey = '?';" [SQLInt timestamp, SQLInt k] >+
       execute "UPDATE Meal  SET (Calories, Description) = ('?', '?') WHERE EntryMeal_entryKey = '?';" [SQLFloat calories, SQLString description, SQLInt k]
     _ -> failDB $ DBError UnknownError "Error: An error occured while trying to update a meal."
 

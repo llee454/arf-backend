@@ -1,6 +1,6 @@
 --- This file has been generated from
 --- 
----     /home/ubuntu/arf-backend/src/arf.erdterm
+---     /arf-backend/src/arf.erdterm
 --- 
 --- and contains definitions for all entities and relations
 --- specified in this model.
@@ -13,7 +13,7 @@ import qualified Database.CDBI.Criteria
 import qualified Database.CDBI.Connection
 import qualified Database.CDBI.Description
 
-data Entry = Entry EntryID Time.ClockTime
+data Entry = Entry EntryID Int
  deriving (Eq,Show,Read)
 
 data EntryID = EntryID Int
@@ -25,7 +25,7 @@ data Entity = Entity EntityID String EntryID
 data EntityID = EntityID Int
  deriving (Eq,Show,Read)
 
-data Event = Event EventID Time.ClockTime EntryID
+data Event = Event EventID Int EntryID
  deriving (Eq,Show,Read)
 
 data EventID = EventID Int
@@ -43,7 +43,7 @@ data Action = Action ActionID EntryID EntryID
 data ActionID = ActionID Int
  deriving (Eq,Show,Read)
 
-data Activity = Activity ActivityID Time.ClockTime EntryID
+data Activity = Activity ActivityID Int EntryID
  deriving (Eq,Show,Read)
 
 data ActivityID = ActivityID Int
@@ -75,15 +75,15 @@ sqliteDBFile = "data/Arf.sqlite"
 entry_CDBI_Description :: Database.CDBI.Description.EntityDescription Entry
 entry_CDBI_Description =
   Database.CDBI.Description.ED "Entry"
-   [Database.CDBI.Connection.SQLTypeInt,Database.CDBI.Connection.SQLTypeDate]
+   [Database.CDBI.Connection.SQLTypeInt,Database.CDBI.Connection.SQLTypeInt]
    (\(Entry (EntryID key) timestamp) ->
      [Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLDate timestamp])
+     ,Database.CDBI.Connection.SQLInt timestamp])
    (\(Entry _ timestamp) ->
      [Database.CDBI.Connection.SQLNull
-     ,Database.CDBI.Connection.SQLDate timestamp])
+     ,Database.CDBI.Connection.SQLInt timestamp])
    (\[Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLDate timestamp] ->
+     ,Database.CDBI.Connection.SQLInt timestamp] ->
      Entry (EntryID key) timestamp)
 
 --- The database table of the `Entry` entity.
@@ -95,7 +95,7 @@ entryColumnKey :: Database.CDBI.Description.Column EntryID
 entryColumnKey = Database.CDBI.Description.Column "\"Key\"" "\"Entry\".\"Key\""
 
 --- The database column `Timestamp` of the `Entry` entity.
-entryColumnTimestamp :: Database.CDBI.Description.Column Time.ClockTime
+entryColumnTimestamp :: Database.CDBI.Description.Column Int
 entryColumnTimestamp =
   Database.CDBI.Description.Column "\"Timestamp\"" "\"Entry\".\"Timestamp\""
 
@@ -108,20 +108,19 @@ entryKeyColDesc =
    (\(Database.CDBI.Connection.SQLInt key) -> EntryID key)
 
 --- The description of the database column `Timestamp` of the `Entry` entity.
-entryTimestampColDesc
-  :: Database.CDBI.Description.ColumnDescription Time.ClockTime
+entryTimestampColDesc :: Database.CDBI.Description.ColumnDescription Int
 entryTimestampColDesc =
   Database.CDBI.Description.ColDesc "\"Entry\".\"Timestamp\""
-   Database.CDBI.Connection.SQLTypeDate
-   (\timestamp -> Database.CDBI.Connection.SQLDate timestamp)
-   (\(Database.CDBI.Connection.SQLDate timestamp) -> timestamp)
+   Database.CDBI.Connection.SQLTypeInt
+   (\timestamp -> Database.CDBI.Connection.SQLInt timestamp)
+   (\(Database.CDBI.Connection.SQLInt timestamp) -> timestamp)
 
 --- Gets the attribute `Key` of the `Entry` entity.
 entryKey :: Entry -> EntryID
 entryKey (Entry a _) = a
 
 --- Gets the attribute `Timestamp` of the `Entry` entity.
-entryTimestamp :: Entry -> Time.ClockTime
+entryTimestamp :: Entry -> Int
 entryTimestamp (Entry _ a) = a
 
 --- Sets the attribute `Key` of the `Entry` entity.
@@ -129,7 +128,7 @@ setEntryKey :: Entry -> EntryID -> Entry
 setEntryKey (Entry _ b1) a = Entry a b1
 
 --- Sets the attribute `Timestamp` of the `Entry` entity.
-setEntryTimestamp :: Entry -> Time.ClockTime -> Entry
+setEntryTimestamp :: Entry -> Int -> Entry
 setEntryTimestamp (Entry a2 _) a = Entry a2 a
 
 --- id-to-value function for entity `Entry`.
@@ -167,7 +166,7 @@ getEntry =
   Database.CDBI.ER.getEntryWithKey entry_CDBI_Description entryColumnKey entryID
 
 --- Inserts a new `Entry` entity.
-newEntry :: Time.ClockTime -> Database.CDBI.Connection.DBAction Entry
+newEntry :: Int -> Database.CDBI.Connection.DBAction Entry
 newEntry timestamp_p =
   Database.CDBI.ER.insertNewEntry entry_CDBI_Description setEntryKey EntryID
    (Entry (EntryID 0) timestamp_p)
@@ -331,18 +330,18 @@ event_CDBI_Description :: Database.CDBI.Description.EntityDescription Event
 event_CDBI_Description =
   Database.CDBI.Description.ED "Event"
    [Database.CDBI.Connection.SQLTypeInt
-   ,Database.CDBI.Connection.SQLTypeDate
+   ,Database.CDBI.Connection.SQLTypeInt
    ,Database.CDBI.Connection.SQLTypeInt]
    (\(Event (EventID key) timestamp (EntryID entryEvent_entryKey)) ->
      [Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLDate timestamp
+     ,Database.CDBI.Connection.SQLInt timestamp
      ,Database.CDBI.Connection.SQLInt entryEvent_entryKey])
    (\(Event _ timestamp (EntryID entryEvent_entryKey)) ->
      [Database.CDBI.Connection.SQLNull
-     ,Database.CDBI.Connection.SQLDate timestamp
+     ,Database.CDBI.Connection.SQLInt timestamp
      ,Database.CDBI.Connection.SQLInt entryEvent_entryKey])
    (\[Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLDate timestamp
+     ,Database.CDBI.Connection.SQLInt timestamp
      ,Database.CDBI.Connection.SQLInt entryEvent_entryKey] ->
      Event (EventID key) timestamp (EntryID entryEvent_entryKey))
 
@@ -355,7 +354,7 @@ eventColumnKey :: Database.CDBI.Description.Column EventID
 eventColumnKey = Database.CDBI.Description.Column "\"Key\"" "\"Event\".\"Key\""
 
 --- The database column `Timestamp` of the `Event` entity.
-eventColumnTimestamp :: Database.CDBI.Description.Column Time.ClockTime
+eventColumnTimestamp :: Database.CDBI.Description.Column Int
 eventColumnTimestamp =
   Database.CDBI.Description.Column "\"Timestamp\"" "\"Event\".\"Timestamp\""
 
@@ -374,13 +373,12 @@ eventKeyColDesc =
    (\(Database.CDBI.Connection.SQLInt key) -> EventID key)
 
 --- The description of the database column `Timestamp` of the `Event` entity.
-eventTimestampColDesc
-  :: Database.CDBI.Description.ColumnDescription Time.ClockTime
+eventTimestampColDesc :: Database.CDBI.Description.ColumnDescription Int
 eventTimestampColDesc =
   Database.CDBI.Description.ColDesc "\"Event\".\"Timestamp\""
-   Database.CDBI.Connection.SQLTypeDate
-   (\timestamp -> Database.CDBI.Connection.SQLDate timestamp)
-   (\(Database.CDBI.Connection.SQLDate timestamp) -> timestamp)
+   Database.CDBI.Connection.SQLTypeInt
+   (\timestamp -> Database.CDBI.Connection.SQLInt timestamp)
+   (\(Database.CDBI.Connection.SQLInt timestamp) -> timestamp)
 
 --- The description of the database column `EntryEvent_entryKey` of the `Event` entity.
 eventEntryEvent_entryKeyColDesc
@@ -398,7 +396,7 @@ eventKey :: Event -> EventID
 eventKey (Event a _ _) = a
 
 --- Gets the attribute `Timestamp` of the `Event` entity.
-eventTimestamp :: Event -> Time.ClockTime
+eventTimestamp :: Event -> Int
 eventTimestamp (Event _ a _) = a
 
 --- Gets the attribute `EntryEvent_entryKey` of the `Event` entity.
@@ -410,7 +408,7 @@ setEventKey :: Event -> EventID -> Event
 setEventKey (Event _ b2 b1) a = Event a b2 b1
 
 --- Sets the attribute `Timestamp` of the `Event` entity.
-setEventTimestamp :: Event -> Time.ClockTime -> Event
+setEventTimestamp :: Event -> Int -> Event
 setEventTimestamp (Event a2 _ b1) a = Event a2 a b1
 
 --- Sets the attribute `EntryEvent_entryKey` of the `Event` entity.
@@ -453,7 +451,7 @@ getEvent =
 
 --- Inserts a new `Event` entity.
 newEventWithEntryEvent_entryKey
-  :: Time.ClockTime -> EntryID -> Database.CDBI.Connection.DBAction Event
+  :: Int -> EntryID -> Database.CDBI.Connection.DBAction Event
 newEventWithEntryEvent_entryKey timestamp_p entryEvent_entryKey_p =
   Database.CDBI.ER.insertNewEntry event_CDBI_Description setEventKey EventID
    (Event (EventID 0) timestamp_p entryEvent_entryKey_p)
@@ -782,18 +780,18 @@ activity_CDBI_Description
 activity_CDBI_Description =
   Database.CDBI.Description.ED "Activity"
    [Database.CDBI.Connection.SQLTypeInt
-   ,Database.CDBI.Connection.SQLTypeDate
+   ,Database.CDBI.Connection.SQLTypeInt
    ,Database.CDBI.Connection.SQLTypeInt]
    (\(Activity (ActivityID key) duration (EntryID entryActivity_entryKey)) ->
      [Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLDate duration
+     ,Database.CDBI.Connection.SQLInt duration
      ,Database.CDBI.Connection.SQLInt entryActivity_entryKey])
    (\(Activity _ duration (EntryID entryActivity_entryKey)) ->
      [Database.CDBI.Connection.SQLNull
-     ,Database.CDBI.Connection.SQLDate duration
+     ,Database.CDBI.Connection.SQLInt duration
      ,Database.CDBI.Connection.SQLInt entryActivity_entryKey])
    (\[Database.CDBI.Connection.SQLInt key
-     ,Database.CDBI.Connection.SQLDate duration
+     ,Database.CDBI.Connection.SQLInt duration
      ,Database.CDBI.Connection.SQLInt entryActivity_entryKey] ->
      Activity (ActivityID key) duration (EntryID entryActivity_entryKey))
 
@@ -807,7 +805,7 @@ activityColumnKey =
   Database.CDBI.Description.Column "\"Key\"" "\"Activity\".\"Key\""
 
 --- The database column `Duration` of the `Activity` entity.
-activityColumnDuration :: Database.CDBI.Description.Column Time.ClockTime
+activityColumnDuration :: Database.CDBI.Description.Column Int
 activityColumnDuration =
   Database.CDBI.Description.Column "\"Duration\"" "\"Activity\".\"Duration\""
 
@@ -826,13 +824,12 @@ activityKeyColDesc =
    (\(Database.CDBI.Connection.SQLInt key) -> ActivityID key)
 
 --- The description of the database column `Duration` of the `Activity` entity.
-activityDurationColDesc
-  :: Database.CDBI.Description.ColumnDescription Time.ClockTime
+activityDurationColDesc :: Database.CDBI.Description.ColumnDescription Int
 activityDurationColDesc =
   Database.CDBI.Description.ColDesc "\"Activity\".\"Duration\""
-   Database.CDBI.Connection.SQLTypeDate
-   (\duration -> Database.CDBI.Connection.SQLDate duration)
-   (\(Database.CDBI.Connection.SQLDate duration) -> duration)
+   Database.CDBI.Connection.SQLTypeInt
+   (\duration -> Database.CDBI.Connection.SQLInt duration)
+   (\(Database.CDBI.Connection.SQLInt duration) -> duration)
 
 --- The description of the database column `EntryActivity_entryKey` of the `Activity` entity.
 activityEntryActivity_entryKeyColDesc
@@ -850,7 +847,7 @@ activityKey :: Activity -> ActivityID
 activityKey (Activity a _ _) = a
 
 --- Gets the attribute `Duration` of the `Activity` entity.
-activityDuration :: Activity -> Time.ClockTime
+activityDuration :: Activity -> Int
 activityDuration (Activity _ a _) = a
 
 --- Gets the attribute `EntryActivity_entryKey` of the `Activity` entity.
@@ -862,7 +859,7 @@ setActivityKey :: Activity -> ActivityID -> Activity
 setActivityKey (Activity _ b2 b1) a = Activity a b2 b1
 
 --- Sets the attribute `Duration` of the `Activity` entity.
-setActivityDuration :: Activity -> Time.ClockTime -> Activity
+setActivityDuration :: Activity -> Int -> Activity
 setActivityDuration (Activity a2 _ b1) a = Activity a2 a b1
 
 --- Sets the attribute `EntryActivity_entryKey` of the `Activity` entity.
@@ -908,7 +905,7 @@ getActivity =
 
 --- Inserts a new `Activity` entity.
 newActivityWithEntryActivity_entryKey
-  :: Time.ClockTime -> EntryID -> Database.CDBI.Connection.DBAction Activity
+  :: Int -> EntryID -> Database.CDBI.Connection.DBAction Activity
 newActivityWithEntryActivity_entryKey duration_p entryActivity_entryKey_p =
   Database.CDBI.ER.insertNewEntry activity_CDBI_Description setActivityKey
    ActivityID
@@ -1538,12 +1535,12 @@ createNewDB dbfile =
   where
     cstr =
       unlines
-       ["create table 'Entry'('Key' integer primary key ,'Timestamp' string not null);"
+       ["create table 'Entry'('Key' integer primary key ,'Timestamp' not null);"
        ,"create table 'Entity'('Key' integer primary key ,'Name' string not null ,'EntryEntity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
-       ,"create table 'Event'('Key' integer primary key ,'Timestamp' string not null ,'EntryEvent_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
+       ,"create table 'Event'('Key' integer primary key ,'Timestamp' not null ,'EntryEvent_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Attrib'('Key' integer primary key ,'EntryAttrib_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryAttrib_subjectKey' int REFERENCES 'Entry'(Key) not null);"
        ,"create table 'Action'('Key' integer primary key ,'EntryAction_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryAction_subjectKey' int REFERENCES 'Entry'(Key) not null);"
-       ,"create table 'Activity'('Key' integer primary key ,'Duration' string not null ,'EntryActivity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
+       ,"create table 'Activity'('Key' integer primary key ,'Duration' not null ,'EntryActivity_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Measurement'('Key' integer primary key ,'Unit' string not null ,'Value' float not null ,'Precision' float not null ,'EntryMeasurement_entryKey' int REFERENCES 'Entry'(Key) unique not null ,'EntryMeasurement_ofKey' int REFERENCES 'Entry'(Key) not null);"
        ,"create table 'Meal'('Key' integer primary key ,'Calories' float not null ,'Description' string not null ,'EntryMeal_entryKey' int REFERENCES 'Entry'(Key) unique not null);"
        ,"create table 'Serving'('Key' integer primary key ,'ServingType' string not null ,'Amount' not null ,'EntryServing_mealKey' int REFERENCES 'Entry'(Key) not null);"]

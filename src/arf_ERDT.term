@@ -1,16 +1,16 @@
-{- ERD specification transformed from /home/ubuntu/arf-backend/src/arf.erdterm -}
+{- ERD specification transformed from /arf-backend/src/arf.erdterm -}
 
  ERD "arf"
    [Entity "Entry"
            [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "Timestamp" (DateDom Nothing) NoKey False],
+            Attribute "Timestamp" (IntDom Nothing) NoKey False],
     Entity "Entity"
            [Attribute "Key" (IntDom Nothing) PKey False,
             Attribute "Name" (StringDom Nothing) NoKey False,
             Attribute "EntryEntity_entryKey" (KeyDom "Entry") Unique False],
     Entity "Event"
            [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "Timestamp" (DateDom Nothing) NoKey False,
+            Attribute "Timestamp" (IntDom Nothing) NoKey False,
             Attribute "EntryEvent_entryKey" (KeyDom "Entry") Unique False],
     Entity "Attrib"
            [Attribute "Key" (IntDom Nothing) PKey False,
@@ -22,7 +22,7 @@
             Attribute "EntryAction_subjectKey" (KeyDom "Entry") NoKey False],
     Entity "Activity"
            [Attribute "Key" (IntDom Nothing) PKey False,
-            Attribute "Duration" (DateDom Nothing) NoKey False,
+            Attribute "Duration" (IntDom Nothing) NoKey False,
             Attribute "EntryActivity_entryKey" (KeyDom "Entry") Unique False],
     Entity "Measurement"
            [Attribute "Key" (IntDom Nothing) PKey False,

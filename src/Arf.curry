@@ -5,12 +5,12 @@ import Database.ERD
 arf =
   ERD "arf"
    [
-     Entity "Entry" [Attribute "Timestamp" (DateDom Nothing) NoKey False],
+     Entity "Entry" [Attribute "Timestamp" (IntDom Nothing) NoKey False],
      Entity "Entity" [Attribute "Name" (StringDom Nothing) NoKey False],
-     Entity "Event" [Attribute "Timestamp" (DateDom Nothing) NoKey False],
+     Entity "Event" [Attribute "Timestamp" (IntDom Nothing) NoKey False],
      Entity "Attrib" [],
      Entity "Action" [],
-     Entity "Activity" [Attribute "Duration" (DateDom Nothing) NoKey False],
+     Entity "Activity" [Attribute "Duration" (IntDom Nothing) NoKey False],
      Entity "Measurement" [
        Attribute "Unit" (StringDom Nothing) NoKey False,
        Attribute "Value" (FloatDom Nothing) NoKey False,

@@ -28,9 +28,9 @@ import qualified Action
 --- @cons subject - the entry of the entity that performed this activity
 data Activity = Activity {
   key      :: Maybe Int,
-  created  :: ClockTime,
-  start    :: ClockTime,
-  duration :: ClockTime,
+  created  :: Int,
+  start    :: Int,
+  duration :: Int,
   subject  :: Int }
 
 ---
@@ -39,9 +39,9 @@ ofJSON json =
   case json of
     (JObject [("key", k), ("created", JNumber created), ("start", JNumber start), ("duration", JNumber duration), ("subject", JNumber subject)]) ->
       maybeIntOfJSON k >>- \x -> Just $ Activity x 
-        (clockTimeOfNum created)
-        (clockTimeOfNum start)
-        (clockTimeOfNum duration)
+        (truncate created)
+        (truncate start)
+        (truncate duration)
         (truncate subject)
     _ -> Nothing
 
@@ -50,9 +50,9 @@ toJSON :: Activity -> JValue
 toJSON (Activity k created start duration subject) =
   JObject [
     ("key",      maybeIntToJSON k),
-    ("created",  clockTimeToJSON created),
-    ("start",    clockTimeToJSON start),
-    ("duration", clockTimeToJSON duration),
+    ("created",  JNumber $ i2f $ created),
+    ("start",    JNumber $ i2f $ start),
+    ("duration", JNumber $ i2f $ duration),
     ("subject",  JNumber $ i2f $ subject)]
 
 ---
@@ -75,12 +75,12 @@ read k =
      "INNER JOIN Action   ON Action.EntryAction_entryKey     = Entry.Key" ++
      "INNER JOIN Activity ON Activity.EntryActivity_entryKey = Entry.Key" ++
      "WHERE Entry.Key = '?';")
-    [SQLInt k] [SQLTypeDate, SQLTypeDate, SQLTypeInt, SQLTypeDate] >+= from
+    [SQLInt k] [SQLTypeInt, SQLTypeInt, SQLTypeInt, SQLTypeInt] >+= from
   where  
     from :: [[SQLValue]] -> DBAction (Maybe Activity)
     from res =
       case res of
-        [[SQLDate created, SQLDate start, SQLInt subject, SQLDate duration]] ->
+        [[SQLInt created, SQLInt start, SQLInt subject, SQLInt duration]] ->
           returnDB $ Right $ Just $ Activity (Just k) created start duration subject
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read an activity from the database."
@@ -91,7 +91,7 @@ update x =
   case x of
     Activity (Just k) created start duration subject ->
       Action.update (Action.Action (Just k) created start subject) >+
-      execute "UPDATE Activity SET Activity.Duration = '?' WHERE Activity.EntryActivity_entryKey = '?';" [SQLDate duration, SQLInt k]
+      execute "UPDATE Activity SET Activity.Duration = '?' WHERE Activity.EntryActivity_entryKey = '?';" [SQLInt duration, SQLInt k]
     _ -> failDB $ DBError UnknownError "Error: An error occured while trying to update an activity."
 
 ---

@@ -2,7 +2,6 @@ module Measurement where
 
 import IO
 import Float
-import Time
 import Maybe
 import JSON.Data
 import JSON.Parser
@@ -31,8 +30,8 @@ import qualified Action
 --- @cons precision - the error margin associated with the measurement (e.g. 2.0)
 data Measurement = Measurement {
   key        :: Maybe Int,
-  created    :: ClockTime,
-  timestamp  :: ClockTime,
+  created    :: Int,
+  timestamp  :: Int,
   measurer   :: Int,
   measured   :: Int,
   value      :: Float,
@@ -54,8 +53,8 @@ ofJSON json =
       ("unit",      JString unit),
       ("precision", JNumber precision)]) ->
       maybeIntOfJSON k >>- \x -> Just $ Measurement x 
-        (clockTimeOfNum created)
-        (clockTimeOfNum timestamp)
+        (truncate created)
+        (truncate timestamp)
         (truncate measurer)
         (truncate measured)
         value unit precision
@@ -66,8 +65,8 @@ toJSON :: Measurement -> JValue
 toJSON (Measurement k created timestamp measurer measured value unit precision) =
   JObject [
     ("key",       maybeIntToJSON k),
-    ("created",   clockTimeToJSON created),
-    ("timestamp", clockTimeToJSON timestamp),
+    ("created",   JNumber $ i2f $ created),
+    ("timestamp", JNumber $ i2f $ timestamp),
     ("measurer",  JNumber $ i2f $ measurer),
     ("measured",  JNumber $ i2f $ measured),
     ("value",     JNumber value),
@@ -102,12 +101,12 @@ read k =
      "INNER JOIN Action      ON Action.EntryAction_entryKey     = Entry.Key " ++
      "INNER JOIN Measurement ON Measurement.EntryMeasurement_entryKey = Entry.Key " ++
      "WHERE Entry.Key = '?';")
-    [SQLInt k] [SQLTypeDate, SQLTypeDate, SQLTypeInt, SQLTypeString, SQLTypeFloat, SQLTypeFloat, SQLTypeInt] >+= from
+    [SQLInt k] [SQLTypeInt, SQLTypeInt, SQLTypeInt, SQLTypeString, SQLTypeFloat, SQLTypeFloat, SQLTypeInt] >+= from
   where  
     from :: [[SQLValue]] -> DBAction (Maybe Measurement)
     from res =
       case res of
-        [[SQLDate created, SQLDate timestamp, SQLInt measurer, SQLString unit, SQLFloat value, SQLFloat precision, SQLInt measured]] ->
+        [[SQLInt created, SQLInt timestamp, SQLInt measurer, SQLString unit, SQLFloat value, SQLFloat precision, SQLInt measured]] ->
           returnDB $ Right $ Just $ Measurement (Just k) created timestamp measurer measured value unit precision
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read a measurement from the database."
@@ -163,7 +162,7 @@ getByMeasured measured =
      "INNER JOIN Measurement ON Measurement.EntryMeasurement_entryKey = Entry.Key " ++
      "WHERE Measurement.EntryMeasurement_ofKey = '?' " ++
      "ORDER BY Event.Timestamp;")
-    [SQLInt measured] [SQLTypeInt, SQLTypeDate, SQLTypeDate, SQLTypeInt, SQLTypeString, SQLTypeFloat, SQLTypeFloat] >+= from
+    [SQLInt measured] [SQLTypeInt, SQLTypeInt, SQLTypeInt, SQLTypeInt, SQLTypeString, SQLTypeFloat, SQLTypeFloat] >+= from
   where  
     from :: [[SQLValue]] -> DBAction [Measurement]
     from = returnDB . Right . mapMaybe parseRes
@@ -171,7 +170,7 @@ getByMeasured measured =
     parseRes :: [SQLValue] -> Maybe Measurement
     parseRes res =
       case res of
-        [SQLInt k, SQLDate created, SQLDate timestamp, SQLInt measurer, SQLString unit, SQLFloat value, SQLFloat precision] ->
+        [SQLInt k, SQLInt created, SQLInt timestamp, SQLInt measurer, SQLString unit, SQLFloat value, SQLFloat precision] ->
           Just $ Measurement (Just k) created timestamp measurer measured value unit precision
         _  -> Nothing
 

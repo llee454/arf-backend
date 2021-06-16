@@ -1,4 +1,4 @@
-SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
+SQLParserInfoType.PInfo "/arf-backend/src/Arf.sqlite" "arf"
  [(("Entry","meal","Serving"),SQLParserInfoType.OnetoN "Serving_meal")
  ,(("Serving","serving","Entry"),SQLParserInfoType.NtoOne "Serving_meal")
  ,(("Entry","entry","Meal"),SQLParserInfoType.OnetoN "Meal_entry")
@@ -71,12 +71,12 @@ SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
  ,("meal",("Meal",["Key","Calories","Description","EntryMeal_entryKey"]))
  ,("serving",("Serving",["Key","ServingType","Amount","EntryServing_mealKey"]))]
  [("entryKey","Entry")
- ,("entryTimestamp","date")
+ ,("entryTimestamp","int")
  ,("entityKey","Entity")
  ,("entityName","string")
  ,("entityEntryEntity_entryKey","Entry")
  ,("eventKey","Event")
- ,("eventTimestamp","date")
+ ,("eventTimestamp","int")
  ,("eventEntryEvent_entryKey","Entry")
  ,("attribKey","Attrib")
  ,("attribEntryAttrib_entryKey","Entry")
@@ -85,7 +85,7 @@ SQLParserInfoType.PInfo "/home/ubuntu/arf-backend/src/Arf.sqlite" "arf"
  ,("actionEntryAction_entryKey","Entry")
  ,("actionEntryAction_subjectKey","Entry")
  ,("activityKey","Activity")
- ,("activityDuration","date")
+ ,("activityDuration","int")
  ,("activityEntryActivity_entryKey","Entry")
  ,("measurementKey","Measurement")
  ,("measurementUnit","string")

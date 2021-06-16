@@ -4,7 +4,6 @@ module Action where
 
 import IO
 import Float
-import Time
 import Maybe
 import JSON.Data
 import JSON.Parser
@@ -29,8 +28,8 @@ import qualified Event
 --- @cons subject - the entry that this action is declaring to be an action.
 data Action = Action {
   key       :: Maybe Int,
-  created   :: ClockTime,
-  timestamp :: ClockTime,
+  created   :: Int,
+  timestamp :: Int,
   subject   :: Int }
 
 
@@ -39,7 +38,7 @@ ofJSON :: JValue -> Maybe Action
 ofJSON json =
   case json of
     (JObject [("key", k), ("created", JNumber created), ("timestamp", JNumber timestamp), ("subject", JNumber subject)]) ->
-      maybeIntOfJSON k >>- \x -> Just $ Action x (clockTimeOfNum created) (clockTimeOfNum timestamp) (truncate subject)
+      maybeIntOfJSON k >>- \x -> Just $ Action x (truncate created) (truncate timestamp) (truncate subject)
     _ -> Nothing
 
 ---
@@ -47,8 +46,8 @@ toJSON :: Action -> JValue
 toJSON (Action k created timestamp subject) =
   JObject [
     ("key",       maybeIntToJSON k),
-    ("created",   clockTimeToJSON created),
-    ("timestamp", clockTimeToJSON timestamp),
+    ("created",   JNumber $ i2f $ created),
+    ("timestamp", JNumber $ i2f $ timestamp),
     ("subject",   JNumber $ i2f $ subject)]
 
 ---
@@ -70,12 +69,12 @@ read k =
      "INNER JOIN Event  ON Event.EntryEvent_entryKey   = Entry.Key" ++
      "INNER JOIN Action ON Action.EntryAction_entryKey = Entry.Key" ++
      "WHERE Entry.Key = '?';")
-    [SQLInt k] [SQLTypeDate, SQLTypeDate, SQLTypeInt] >+= from
+    [SQLInt k] [SQLTypeInt, SQLTypeInt, SQLTypeInt] >+= from
   where
     from :: [[SQLValue]] -> DBAction (Maybe Action)
     from res =
       case res of
-        [[SQLDate created, SQLDate timestamp, SQLInt subject]] ->
+        [[SQLInt created, SQLInt timestamp, SQLInt subject]] ->
           returnDB $ Right $ Just $ Action (Just k) created timestamp subject
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read an action from the database."

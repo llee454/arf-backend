@@ -4,13 +4,13 @@
 
 module Health where
 
+import LocalTime
 import Float
 import IO
 import Maybe
 import JSON.Data
 import JSON.Parser
 import JSON.Pretty
-import Time
 
 import Database.CDBI.Connection
 
@@ -50,7 +50,7 @@ data BodyMeasurements = BodyMeasurements {
 --- and attributes about my health.
 init :: IO (DBAction ())
 init = do
-  currTime <- getClockTime 
+  currTime <- getCurrPosixTime
   return $
     Entity.insert (Entity.Entity Nothing currTime myName) >+=
     \(Entity.Entity (Just k) _ _) ->
@@ -67,9 +67,9 @@ init = do
 --- @param measurementTimestamp - the date on which the measurement was taken
 --- @param measurement - a list of tuples of the form (attribName, value, unit, prec)
 --- @return records the measurements for the named attributes
-insertMeasurements :: [(String, Float, String, Float)] -> ClockTime -> IO (DBAction ())
+insertMeasurements :: [(String, Float, String, Float)] -> Int -> IO (DBAction ())
 insertMeasurements measurements measurementTimestamp = do
-  currTime <- getClockTime
+  currTime <- getCurrPosixTime
   return $
     Entity.getByName myName >+=
     \(Just (Entity.Entity (Just k) _ _)) ->
@@ -90,7 +90,7 @@ insertMeasurements measurements measurementTimestamp = do
 --- Records a blood pressure measurement.
 --- @param measurements - the measurements.
 --- @param measurementTimestamp - the date on which the measurement was taken.
-insertBloodPressure :: BloodPressure -> ClockTime -> IO (DBAction ())
+insertBloodPressure :: BloodPressure -> Int -> IO (DBAction ())
 insertBloodPressure (BloodPressure systolic diastolic pulse) =
   insertMeasurements
     [("Health.BloodPressure.systolic",  i2f systolic,  "in. Hg.", 10.0),
@@ -100,7 +100,7 @@ insertBloodPressure (BloodPressure systolic diastolic pulse) =
 --- Records a set of body measurements.
 --- @param measurements - the measurements.
 --- @param measurementTimestamp - the date on which the measurement was taken.
-insertBodyMeasurements :: BodyMeasurements -> ClockTime -> IO (DBAction ())
+insertBodyMeasurements :: BodyMeasurements -> Int -> IO (DBAction ())
 insertBodyMeasurements (BodyMeasurements waist biceps weight) =
   insertMeasurements
     [("Health.BodyMeasurement.waist",  waist,  "in.", 0.5),
@@ -110,7 +110,7 @@ insertBodyMeasurements (BodyMeasurements waist biceps weight) =
 --- Accepts a JSON object that represents a blood pressure measurement
 --- and returns the measurements and the date on which the measurments
 --- were taken.
-bloodPressureOfJSON :: JValue -> Maybe (ClockTime, BloodPressure)
+bloodPressureOfJSON :: JValue -> Maybe (Int, BloodPressure)
 bloodPressureOfJSON json =
   case json of
     (JObject [
@@ -118,13 +118,13 @@ bloodPressureOfJSON json =
       ("systolic",             JNumber systolic),
       ("diastolic",            JNumber diastolic),
       ("pulse",                JNumber pulse)]) ->
-      Just (clockTimeOfNum measurementTimestamp,
+      Just (truncate measurementTimestamp,
         BloodPressure (truncate systolic) (truncate diastolic) (truncate pulse))
     _ -> Nothing
 
 --- Accepts a JSON object that represents body measurements and returns
 --- the measurements and the date on which the measurements were taken.
-bodyMeasurementsOfJSON :: JValue -> Maybe (ClockTime, BodyMeasurements)
+bodyMeasurementsOfJSON :: JValue -> Maybe (Int, BodyMeasurements)
 bodyMeasurementsOfJSON json =
   case json of
     (JObject [
@@ -132,7 +132,7 @@ bodyMeasurementsOfJSON json =
       ("waist",                JNumber waist),
       ("biceps",               JNumber biceps),
       ("weight",               JNumber weight)]) ->
-      Just (clockTimeOfNum measurementTimestamp, BodyMeasurements waist biceps weight)
+      Just (truncate measurementTimestamp, BodyMeasurements waist biceps weight)
     _ -> Nothing
 
 --- 

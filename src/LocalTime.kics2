@@ -74,9 +74,11 @@ external_d_C_fromPosix ts _ _ =
     in C_DateTime (toCurry (toModifiedJulianDay d)) $
          C_TimeOfDay (toCurry h) (toCurry m) (toCurry ((round s) :: Int))
 
+-- utcTimeToPOSIXSeconds returns the number of nanoseconds (1e12) since
+-- 1970-01-01 00:00. This function return the number of seconds.
 external_d_C_toPosix :: C_DateTime -> Cover -> ConstStore -> CP.C_Int
 external_d_C_toPosix t _ _ =
-  toCurry ((floor $ (1e9 *) $ nominalDiffTimeToSeconds $ utcTimeToPOSIXSeconds $ toUTCTime t) :: Int)
+  toCurry ((floor $ nominalDiffTimeToSeconds $ utcTimeToPOSIXSeconds $ toUTCTime t) :: Int)
 
 external_d_C_getTimeZonePath :: Curry_Prelude.OP_List Curry_Prelude.C_Char -> C_DateTime -> Cover -> ConstStore -> C_IO C_TimeZone
 external_d_C_getTimeZonePath path dateTime _ _ =

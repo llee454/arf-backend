@@ -4,7 +4,6 @@ module Attribute where
 
 import IO
 import Float
-import Time
 import Maybe
 import JSON.Data
 import JSON.Parser
@@ -28,7 +27,7 @@ import qualified Entity
 --- @cons subject - the entry that the attribute is associated with
 data Attribute = Attribute {
   key     :: Maybe Int,
-  created :: ClockTime,
+  created :: Int,
   name    :: String,
   subject :: Int
 }
@@ -43,7 +42,7 @@ ofJSON json =
       ("name",    JString name),
       ("subject", JNumber subject)]) ->
       maybeIntOfJSON k >>- \x -> Just $ Attribute x
-        (clockTimeOfNum created) name
+        (truncate created) name
         (truncate subject)
     _ -> Nothing
 
@@ -52,7 +51,7 @@ toJSON :: Attribute -> JValue
 toJSON (Attribute k created name subject) =
   JObject [
     ("key",     maybeIntToJSON k),
-    ("created", clockTimeToJSON created),
+    ("created", JNumber $ i2f $ created),
     ("name",    JString name),
     ("subject", JNumber $ i2f $ subject)]
 
@@ -78,12 +77,12 @@ read k =
      "INNER JOIN Entity ON Entity.EntryEntity_entryKey = Entry.Key " ++
      "INNER JOIN Attrib ON Attrib.EntryAttrib_entryKey = Entry.Key " ++
      "WHERE Entry.Key = '?';")
-    [SQLInt k] [SQLTypeDate, SQLTypeString, SQLTypeInt] >+= from
+    [SQLInt k] [SQLTypeInt, SQLTypeString, SQLTypeInt] >+= from
   where
     from :: [[SQLValue]] -> DBAction (Maybe Attribute)
     from res =
       case res of
-        [[SQLDate created, SQLString name, SQLInt subject]] ->
+        [[SQLInt created, SQLString name, SQLInt subject]] ->
           returnDB $ Right $ Just $ Attribute (Just k) created name subject
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read an attribute from the database."
@@ -130,12 +129,12 @@ getByEntryAndName subject name =
      "INNER JOIN Entity ON Entity.EntryEntity_entryKey = Entry.Key " ++
      "INNER JOIN Attrib ON Attrib.EntryAttrib_entryKey = Entry.Key " ++
      "WHERE Attrib.EntryAttrib_subjectKey = '?' AND Entity.Name = '?';")
-    [SQLInt subject, SQLString name] [SQLTypeInt, SQLTypeDate] >+= from
+    [SQLInt subject, SQLString name] [SQLTypeInt, SQLTypeInt] >+= from
   where
     from :: [[SQLValue]] -> DBAction (Maybe Attribute)
     from res =
       case res of
-        [[SQLInt k, SQLDate created]] ->
+        [[SQLInt k, SQLInt created]] ->
            returnDB $ Right $ Just $ Attribute (Just k) created name subject
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to retrieve attributes by subject and name."

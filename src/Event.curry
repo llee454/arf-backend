@@ -4,7 +4,6 @@ module Event where
 
 import IO
 import Float
-import Time
 import Maybe
 import JSON.Data
 import JSON.Parser
@@ -25,14 +24,14 @@ import arf
 --- @cons key - the entry key
 --- @cons created - the date on which the entry was created
 --- @cons timestamp - the date on which the event occured
-data Event = Event { key :: Maybe Int, created :: ClockTime, timestamp :: ClockTime }
+data Event = Event { key :: Maybe Int, created :: Int, timestamp :: Int }
 
 ---
 ofJSON :: JValue -> Maybe Event
 ofJSON json =
   case json of
     (JObject [("key", k), ("created", JNumber created), ("timestamp", JNumber timestamp)]) ->
-      maybeIntOfJSON k >>- \x -> Just $ Event x (clockTimeOfNum created) (clockTimeOfNum timestamp)
+      maybeIntOfJSON k >>- \x -> Just $ Event x (truncate created) (truncate timestamp)
     _ -> Nothing
 
 ---
@@ -40,8 +39,8 @@ toJSON :: Event -> JValue
 toJSON (Event k created timestamp) =
   JObject [
     ("key",       maybeIntToJSON k),
-    ("created",   clockTimeToJSON created),
-    ("timestamp", clockTimeToJSON timestamp)]
+    ("created",   JNumber $ i2f $ created),
+    ("timestamp", JNumber $ i2f $ timestamp)]
 
 --- Inserts an event into the database.
 --- @return the inserted event with the key set.
@@ -59,12 +58,12 @@ read :: Int -> DBAction (Maybe Event)
 read k =
   select
     "SELECT Entry.Timestamp, Event.Timestamp FROM Entry INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key WHERE Entry.Key = '?';"
-    [SQLInt k] [SQLTypeDate, SQLTypeDate] >+= from
+    [SQLInt k] [SQLTypeInt, SQLTypeInt] >+= from
   where
     from :: [[SQLValue]] -> DBAction (Maybe Event)
     from res =
       case res of
-        [[SQLDate created, SQLDate timestamp]] -> returnDB $ Right $ Just $ Event (Just k) created timestamp
+        [[SQLInt created, SQLInt timestamp]] -> returnDB $ Right $ Just $ Event (Just k) created timestamp
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read an event from the SQLite database."
 
@@ -73,8 +72,8 @@ update :: Event -> DBAction ()
 update x =
   case x of
     Event (Just k) created timestamp ->
-      execute "UPDATE Entry SET Timestamp = '?' WHERE Key = '?';" [SQLDate created, SQLInt k] >+
-      execute "UPDATE Event SET Timestamp = '?' WHERE EntryEvent_entryKey = '?';" [SQLDate timestamp, SQLInt k]
+      execute "UPDATE Entry SET Timestamp = '?' WHERE Key = '?';" [SQLInt created, SQLInt k] >+
+      execute "UPDATE Event SET Timestamp = '?' WHERE EntryEvent_entryKey = '?';" [SQLInt timestamp, SQLInt k]
     _ -> failDB $ DBError UnknownError "Error: An error occured while trying to update an event."
 
 --- Accepts an Event ID and deletes the associated event.
