@@ -163,29 +163,6 @@ readMeal k =
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read a meal from the database."
 
---- Accepts an ISO8601 UTC date time and returns the IDs of meals that
---- occured after the given date time.
-readMealsAfter :: Int -> DBAction [Meal]
-readMealsAfter timestamp =
-  select
-    ("SELECT Entry.Key " ++
-     "FROM Entry " ++
-     "INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key " ++
-     "INNER JOIN Meal On Meal.EntryMeal_entryKey = Entry.Key " ++
-     "WHERE Event.Timestamp >= '?';")
-    [SQLInt timestamp] [SQLTypeInt] >+= from
-  where
-    from :: [[SQLValue]] -> DBAction [Meal]
-    from res =
-      foldr
-        (\[SQLInt k] acc -> acc >+= \meals -> readMeal k >+= \(Just meal) -> returnDB $ Right (meal : meals))
-        (returnDB $ Right [])
-        res
-
---- Return the set of meals eaten after midnight New York local time.
-readMealsToday :: IO (DBAction [Meal])
-readMealsToday = getMidnightPosix >>= return . readMealsAfter
-
 ---
 update :: Meal -> DBAction ()
 update meal =
@@ -210,6 +187,78 @@ entityIntf = EntityIntf {
   delete_ = deleteMeal
 }
 
+--- Accepts an ISO8601 UTC date time and returns the IDs of meals that
+--- occured after the given date time.
+readMealsAfter :: Int -> DBAction [Meal]
+readMealsAfter timestamp =
+  select
+    ("SELECT Entry.Key " ++
+     "FROM Entry " ++
+     "INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key " ++
+     "INNER JOIN Meal On Meal.EntryMeal_entryKey = Entry.Key " ++
+     "WHERE Event.Timestamp >= '?';")
+    [SQLInt timestamp] [SQLTypeInt] >+= from
+  where
+    from :: [[SQLValue]] -> DBAction [Meal]
+    from res =
+      foldr
+        (\[SQLInt k] acc -> acc >+= \meals -> readMeal k >+= \(Just meal) -> returnDB $ Right (meal : meals))
+        (returnDB $ Right [])
+        res
+
+--- Return the set of meals eaten after midnight New York local time.
+readMealsToday :: IO (DBAction [Meal])
+readMealsToday = getMidnightPosix >>= return . readMealsAfter
+
+--- The recommended daily calorie limit when trying to lose weight.
+dailyCalorieLimit :: Float
+dailyCalorieLimit = 1900
+
+--- Returns the number of calories that I should aim to consume each hour
+--- when trying to lose weight.
+---
+--- Note: this function assumes that I eat all of my meals between
+--- 6:00 AM and 9:00 PM (local time).
+calorieConsumptionRate :: Float
+calorieConsumptionRate = dailyCalorieLimit /. (12 +. 9 -. 6)
+
+--- Returns the number of calories that I should aim to consume by the
+--- current time.
+calorieLimit :: IO Float
+calorieLimit = do
+  t <- getCurrPosixTime
+  s <- getMidnightPosix
+  return $ calorieConsumptionRate *. ((i2f t) -. (i2f s) -. (6 *. 3600)) /. 3600
+
+--- Returns the number of calories remaining to be consumed, +Remaining.
+---
+--- Note: this function is used to help pace my calorie consumption so
+--- that throughout a day I can limit my consumption to my target daily
+--- intake.
+remainingCalories :: (Float -> Env -> IO ()) -> Env -> IO ()
+remainingCalories f env = do
+  query <- readMealsToday
+  run (runInTransaction query)
+    ("Error: An error occured while trying to calculate the number of calories remaining today. " ++)
+    (\meals ->
+      let cals = foldr (\meal acc -> acc +. (calories meal)) 0 meals
+        in f cals)
+    env
+
+--- Returns my recommended meal size given three meals a day and 2 snacks
+--- of 200 calories, +Cals.
+mealSize :: Float
+mealSize = (dailyCalorieLimit -. 400) /. 3
+
+--- Returns the number of hours until I can have my next meal if calorie
+--- pacing.
+numHoursTillNextMeal :: (Float -> Env -> IO ()) -> Env -> IO ()
+numHoursTillNextMeal f =
+  remainingCalories $
+    \cals ->
+      let hours = (mealSize -. cals) /. calorieConsumptionRate
+        in f hours
+
 --- 
 handler :: [String] -> Env -> IO ()
 handler args env = do
@@ -220,5 +269,7 @@ handler args env = do
         ("Error: An error occured while trying to read the meals eaten today. " ++)
         (Env.reply . ppJSON . JArray . map mealToJSON)
         env
+    ["remaining-cals"] -> remainingCalories (\cals -> Env.reply (show cals)) env
+    ["hours-till-next-meal"] -> numHoursTillNextMeal (\hours -> Env.reply (show hours)) env
     _ -> EntityIntf.handler entityIntf EntityIntf.defaultHandler args env
         

@@ -27,7 +27,8 @@ writeErr msg res@(Response err _)
 --- Sends the response.
 respond :: Response -> IO ()
 respond (Response err content) = do
-  putStrLn "Content-type: text/html"
+  putStrLn "Access-Control-Allow-Origin: *"
+  putStrLn "Content-type: text/plain"
   when err $ putStr "Status: 500 Internal Server Error"
   putStrLn "\n"
   putStrLn content

@@ -27,15 +27,3 @@ run action err cont env = do
   case res of
     Left (DBError _ emsg) -> endWithError (err emsg) env
     Right x -> cont x env
-
----
-toLocalTime :: String -> IO String
-toLocalTime timestamp = do
-  setEnviron "TZ" "EST"
-  -- hdl <- connectToCommand $ "env TZ=\"EST\" date +\"%Y-%m-%d %H:%M:%S\" --date='@" ++ timestamp ++ "'"
-  (stdin, stdout, stderr) <- execCmd $ "TZ=\"America/Los_Angeles\" date +\"%Y-%m-%d %H:%M:%S\" --date='@" ++ timestamp ++ "'"
-  res <- hGetContents stdout
-  hClose stdin
-  hClose stdout
-  hClose stderr
-  return res
