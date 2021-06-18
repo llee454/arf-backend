@@ -238,10 +238,11 @@ calorieLimit = do
 remainingCalories :: (Float -> Env -> IO ()) -> Env -> IO ()
 remainingCalories f env = do
   query <- readMealsToday
+  targetCals <- calorieLimit
   run (runInTransaction query)
     ("Error: An error occured while trying to calculate the number of calories remaining today. " ++)
     (\meals ->
-      let cals = foldr (\meal acc -> acc +. (calories meal)) 0 meals
+      let cals = foldr (\meal acc -> acc -. (calories meal)) targetCals meals
         in f cals)
     env
 
