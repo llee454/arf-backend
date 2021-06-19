@@ -230,7 +230,7 @@ calorieLimit = do
   s <- getMidnightPosix
   return $ calorieConsumptionRate *. ((i2f t) -. (i2f s) -. (6 *. 3600)) /. 3600
 
---- Returns the number of calories remaining to be consumed, +Remaining.
+--- Returns the number of calories remaining to be consumed.
 ---
 --- Note: this function is used to help pace my calorie consumption so
 --- that throughout a day I can limit my consumption to my target daily
@@ -243,6 +243,17 @@ remainingCalories f env = do
     ("Error: An error occured while trying to calculate the number of calories remaining today. " ++)
     (\meals ->
       let cals = foldr (\meal acc -> acc -. (calories meal)) targetCals meals
+        in f cals)
+    env
+
+--- Returns the number of calories eaten today.
+caloriesToday :: (Float -> Env -> IO ()) -> Env -> IO ()
+caloriesToday f env = do
+  query <- readMealsToday
+  run (runInTransaction query)
+    ("Error: An error occured while trying to calculate the number of calories eaten today. " ++)
+    (\meals ->
+      let cals = foldr (\meal acc -> acc +. (calories meal)) 0 meals
         in f cals)
     env
 
@@ -264,6 +275,7 @@ numHoursTillNextMeal f =
 handler :: [String] -> Env -> IO ()
 handler args env = do
   case args of
+    ["cals-today"] -> caloriesToday (\cals -> Env.reply (show cals)) env
     ["meals-today"] -> do
       query <- readMealsToday
       run (runInTransaction query)
