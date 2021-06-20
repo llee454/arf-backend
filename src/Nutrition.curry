@@ -291,7 +291,7 @@ readMeals =
     ("SELECT Entry.Key " ++
      "FROM Entry " ++
      "INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key " ++
-     "INNER JOIN Meal On Meal.EntryEvent_entryKey = Entry.Key;")
+     "INNER JOIN Meal On Meal.EntryMeal_entryKey = Entry.Key;")
     [] [SQLTypeInt] >+= from
   where
     from :: [[SQLValue]] -> DBAction [Meal]
