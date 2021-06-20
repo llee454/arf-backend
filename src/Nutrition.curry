@@ -2,6 +2,7 @@
 
 module Nutrition where
 
+import Text.CSV
 import Float
 import IO
 import Maybe
@@ -82,6 +83,18 @@ mealToJSON (Meal k created timestamp description calories servings) =
     ("description", JString description),
     ("calories",    JNumber calories),
     ("servings",    JArray $ map servingToJSON servings)]
+
+---
+mealToCSV :: Meal -> [String]
+mealToCSV (Meal Nothing _ _ _ _ _) = error $ "[mealToCSV] Error: an error occured while trying to convert meals into CSVs."
+mealToCSV (Meal (Just k) created timestamp description calories servings) = [
+    (show k), (show created), (show timestamp), description, (show calories),
+    show (JArray (map servingToJSON servings))
+  ]
+
+---
+mealsToCSV :: [Meal] -> [[String]]
+mealsToCSV = map mealToCSV
 
 ---
 insertServing :: Int -> Serving -> DBAction ()
@@ -271,10 +284,33 @@ numHoursTillNextMeal f =
       let hours = (mealSize -. cals) /. calorieConsumptionRate
         in f hours
 
+--- Returns a record of every meal.
+readMeals :: DBAction [Meal]
+readMeals =
+  select
+    ("SELECT Entry.Key " ++
+     "FROM Entry " ++
+     "INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key " ++
+     "INNER JOIN Meal On Meal.EntryEvent_entryKey = Entry.Key;")
+    [] [SQLTypeInt] >+= from
+  where
+    from :: [[SQLValue]] -> DBAction [Meal]
+    from res =
+      foldr
+        (\[SQLInt k] acc -> acc >+= \meals -> readMeal k >+= \(Just meal) -> returnDB $ Right (meal : meals))
+        (returnDB $ Right [])
+        res
+
 --- 
 handler :: [String] -> Env -> IO ()
 handler args env = do
   case args of
+    ["meals-csv"] ->
+      let query = readMeals
+      in run (runInTransaction query)
+        ("Error: An error occured while trying to read all of the meal entries in the database. " ++)
+        (\meals env -> Env.reply (showCSV $ mealsToCSV meals) env)
+        env
     ["cals-today"] -> caloriesToday (\cals -> Env.reply (show cals)) env
     ["meals-today"] -> do
       query <- readMealsToday
