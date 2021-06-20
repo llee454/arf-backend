@@ -305,7 +305,7 @@ readMeals =
 handler :: [String] -> Env -> IO ()
 handler args env = do
   case args of
-    ["meals-csv"] ->
+    ["meals-csv.csv"] ->
       let query = readMeals
       in run (runInTransaction query)
         ("Error: An error occured while trying to read all of the meal entries in the database. " ++)
