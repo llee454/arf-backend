@@ -7,6 +7,7 @@
   "license": "BSD-3-Clause",
   "licenseFile": "LICENSE",
   "dependencies": {
+    "csv": ">= 1.0.0",
     "cdbi": ">= 1.0.0",
     "det-parse": ">= 0.0.0",
     "regexp": ">= 1.0.0",
