@@ -87,9 +87,11 @@ mealToJSON (Meal k created timestamp description calories servings) =
 ---
 mealToCSV :: Meal -> [String]
 mealToCSV (Meal Nothing _ _ _ _ _) = error $ "[mealToCSV] Error: an error occured while trying to convert meals into CSVs."
-mealToCSV (Meal (Just k) created timestamp description calories servings) = [
-    (show k), (show created), (show timestamp), description, (show calories),
-    show (JArray (map servingToJSON servings))
+mealToCSV (Meal (Just k) _ timestamp description calories _) = [
+    (show k),
+    (toISO8601 $ fromPosix timestamp),
+    description,
+    (show calories)
   ]
 
 ---
@@ -305,11 +307,11 @@ readMeals =
 handler :: [String] -> Env -> IO ()
 handler args env = do
   case args of
-    ["meals-csv.csv"] ->
+    ["meals-csv"] ->
       let query = readMeals
       in run (runInTransaction query)
         ("Error: An error occured while trying to read all of the meal entries in the database. " ++)
-        (\meals env -> Env.reply (showCSV $ mealsToCSV meals) env)
+        (\meals -> Env.reply (showCSV $ mealsToCSV meals))
         env
     ["cals-today"] -> caloriesToday (\cals -> Env.reply (show cals)) env
     ["meals-today"] -> do

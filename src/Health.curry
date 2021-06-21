@@ -4,6 +4,7 @@
 
 module Health where
 
+import Text.CSV
 import LocalTime
 import Float
 import IO
@@ -20,7 +21,7 @@ import JSONExt
 import qualified Entity
 import qualified EntityIntf
 import qualified Attribute
-import qualified Measurement
+import qualified Measurement as M
 
 myName :: String
 myName = "Larry Darryl. Lee Jr."
@@ -77,7 +78,7 @@ insertMeasurements measurements measurementTimestamp = do
         record attribName value unit prec =
           Attribute.getByEntryAndName k attribName >+=
           \(Just (Attribute.Attribute (Just j) _ _ _)) ->
-            Measurement.insert (Measurement.Measurement
+            M.insert (M.Measurement
               Nothing currTime measurementTimestamp k j value unit prec) >+
             (returnDB $ Right ())
       in
@@ -135,12 +136,50 @@ bodyMeasurementsOfJSON json =
       Just (truncate measurementTimestamp, BodyMeasurements waist biceps weight)
     _ -> Nothing
 
+--- Returns the set of health measurements taken of myself.
+readMeasurements :: DBAction [M.Measurement]
+readMeasurements =
+  Entity.getByName myName  >+=
+  \(Just (Entity.Entity (Just k) _ _)) ->
+    select
+      ("SELECT Measurement.EntryMeasurement_entryKey " ++
+       "FROM Measurement " ++
+       "WHERE Measurement.EntryMeasurement_ofKey = '?';")
+       [SQLInt k] [SQLTypeInt] >+= from
+  where
+    from :: [[SQLValue]] -> DBAction [M.Measurement]
+    from res =
+      foldr
+        (\[SQLInt k] acc ->
+          acc >+= \measurements -> M.read k >+= \(Just measurement) -> returnDB $ Right (measurement : measurements))
+        (returnDB $ Right [])
+        res
+
+--- Accepts a health measurement concerning me and returns the equivalent CSV row.
+measurementToCSV :: M.Measurement -> [String]
+measurementToCSV (M.Measurement k _ timestamp _ _ value unit precision) = [
+    (show k),
+    (toISO8601 $ fromPosix timestamp),
+    (show value),
+    (show unit),
+    (show precision)
+  ]
+
+measurementsToCSV :: [M.Measurement] -> [[String]]
+measurementsToCSV = map measurementToCSV
+
 --- 
 handler :: [String] -> Env -> IO ()
 handler args env = do
   req <- getContents
   let json = parseJSON req
     in case (args, json >>- bloodPressureOfJSON, json >>- bodyMeasurementsOfJSON) of
+      (["measurements-csv"], _, _) ->
+        let query = readMeasurements
+        in run (runInTransaction query)
+          ("Error: An error occured while trying to read health measurements. " ++)
+          (\measurements -> Env.reply (showCSV $ measurementsToCSV measurements))
+          env
       (["record-blood-pressure"], Just (measurementTimestamp, bloodPressure), _) -> do
         query <- insertBloodPressure bloodPressure measurementTimestamp
         run (runInTransaction query)
