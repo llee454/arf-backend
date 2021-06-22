@@ -3,6 +3,7 @@
 module Nutrition where
 
 import Text.CSV
+import List
 import Float
 import IO
 import Maybe
@@ -293,7 +294,8 @@ readMeals =
     ("SELECT Entry.Key " ++
      "FROM Entry " ++
      "INNER JOIN Event On Event.EntryEvent_entryKey = Entry.Key " ++
-     "INNER JOIN Meal On Meal.EntryMeal_entryKey = Entry.Key;")
+     "INNER JOIN Meal On Meal.EntryMeal_entryKey = Entry.Key " ++
+     "ORDER BY Event.Timestamp DESC;")
     [] [SQLTypeInt] >+= from
   where
     from :: [[SQLValue]] -> DBAction [Meal]
@@ -302,6 +304,35 @@ readMeals =
         (\[SQLInt k] acc -> acc >+= \meals -> readMeal k >+= \(Just meal) -> returnDB $ Right (meal : meals))
         (returnDB $ Right [])
         res
+
+--- Returns a database action that will return all of the meals in the
+--- database grouped by day where each day is the number of days since
+--- Nov 17 1858 measured in New York Local time.
+readMealsByDay :: IO (DBAction [(Int, [Meal])])
+readMealsByDay = do
+  t  <- getCurrPosixTime >>= return . fromPosix
+  tz <- getTimeZonePath newYorkTimeZonePath t
+  return $
+    readMeals >+=
+    \meals ->
+      returnDB $ Right $
+        map (\xs -> case xs of 
+          [] -> error "[readMealsByDay] Error: an internal error occured while trying to read the meals in the database and group them by day."
+          ((n, x):ys) -> (n, x:(map snd ys))) $
+          List.groupBy (\(n, _) (m, _) -> n == m)
+            (map (\meal -> (day (toTimeZone tz $ fromPosix (timestamp meal)), meal)) meals)
+
+--- Returns a database action that returns a list of pairs of the form
+--- (d, n), where d represents a day measured in the number of days
+--- since Nov. 17 1858, and n represents the number of calories I
+--- consumed on the referenced day.
+calsByDay :: IO (DBAction [(Int, Float)])
+calsByDay = do
+  query <- readMealsByDay
+  return $
+    query >+=
+      returnDB . Right .
+        map (\(d, meals) -> (d, foldr (+.) 0 (map calories meals)))
 
 --- 
 handler :: [String] -> Env -> IO ()
@@ -312,6 +343,12 @@ handler args env = do
       in run (runInTransaction query)
         ("Error: An error occured while trying to read all of the meal entries in the database. " ++)
         (\meals -> Env.reply (showCSV $ mealsToCSV meals))
+        env
+    ["daily-cals"] -> do
+      query <- calsByDay
+      run (runInTransaction query)
+        ("Error: An error occured while trying to compute the number of calories consumed each day. " ++)
+        (\entries -> Env.reply (showCSV $ map (\(d, cals) -> [show d, show cals]) entries))
         env
     ["cals-today"] -> caloriesToday (\cals -> Env.reply (show cals)) env
     ["meals-today"] -> do
