@@ -139,6 +139,11 @@ getByEntryAndName subject name =
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to retrieve attributes by subject and name."
 
+getByEntryAndNameErr :: Int -> String -> DBAction Attribute
+getByEntryAndNameErr subject name =
+  fromJustDB ("Error: An error occured while trying to read an attribute named '" ++ name ++ "'.") $
+    getByEntryAndName subject name
+
 --- Handles non-CRUD requests.
 --- @param args - the URL arguments
 --- @param env  - the execution environment

@@ -27,3 +27,13 @@ run action err cont env = do
   case res of
     Left (DBError _ emsg) -> endWithError (err emsg) env
     Right x -> cont x env
+
+--- Accepts an error message and a database action that returns a maybe
+--- value; executes the action; and returns an error if the value is
+--- Nothing. Otherwise, returns the value.
+fromJustDB :: String -> DBAction (Maybe a) -> DBAction a
+fromJustDB emsg action =
+  action >+= \res ->
+  case res of
+    Just x  -> returnDB $ Right x
+    Nothing -> failDB $ DBError UnknownError emsg

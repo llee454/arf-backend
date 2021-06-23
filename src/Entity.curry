@@ -113,6 +113,12 @@ getByName name =
         [] -> returnDB $ Right Nothing
         _  -> failDB $ DBError UnknownError "Error: An error occured while trying to read an Entity from the SQLite database."
 
+--- Returns the entity that has the given name. If the entity does not
+--- exist, return a database error.
+getByNameErr :: String -> DBAction Entity
+getByNameErr name =
+  fromJustDB ("Error: An error occured while trying to read an entity named '" ++ name ++ "'.") $ getByName name
+
 --- Handles non-CRUD requests.
 --- @param args - the URL arguments
 --- @param env  - the execution environment

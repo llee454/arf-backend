@@ -64,6 +64,7 @@ init = do
            createAttrib "Health.BodyMeasurement.weight"  >+
            (returnDB $ Right ())
 
+-- TODO: Rewrite using getEntryByNameErr fns.
 --- Accepts a list of measurements of attributes about me and inserts them into the database.
 --- @param measurementTimestamp - the date on which the measurement was taken
 --- @param measurement - a list of tuples of the form (attribName, value, unit, prec)
@@ -136,24 +137,18 @@ bodyMeasurementsOfJSON json =
       Just (truncate measurementTimestamp, BodyMeasurements waist biceps weight)
     _ -> Nothing
 
---- Returns the set of health measurements taken of myself.
-readMeasurements :: DBAction [M.Measurement]
-readMeasurements =
-  Entity.getByName myName  >+=
-  \(Just (Entity.Entity (Just k) _ _)) ->
-    select
-      ("SELECT Measurement.EntryMeasurement_entryKey " ++
-       "FROM Measurement " ++
-       "WHERE Measurement.EntryMeasurement_ofKey = '?';")
-       [SQLInt k] [SQLTypeInt] >+= from
-  where
-    from :: [[SQLValue]] -> DBAction [M.Measurement]
-    from res =
-      foldr
-        (\[SQLInt k] acc ->
-          acc >+= \measurements -> M.read k >+= \(Just measurement) -> returnDB $ Right (measurement : measurements))
-        (returnDB $ Right [])
-        res
+--- Accepts an attribute name and returns the set of measurements of
+--- that attribute on me.
+readAttribMeasurements :: String -> DBAction [M.Measurement]
+readAttribMeasurements attribName =
+  Entity.getByNameErr myName >+=
+  \me ->
+    Attribute.getByEntryAndNameErr (fromJust $ Entity.key me) attribName >+=
+    \attrib ->
+      M.getByMeasured (fromJust $ Attribute.key attrib)
+
+readWeightMeasurements :: DBAction [M.Measurement]
+readWeightMeasurements = readAttribMeasurements "Health.BodyMeasurement.weight"
 
 --- Accepts a health measurement concerning me and returns the equivalent CSV row.
 measurementToCSV :: M.Measurement -> [String]
@@ -174,10 +169,9 @@ handler args env = do
   req <- getContents
   let json = parseJSON req
     in case (args, json >>- bloodPressureOfJSON, json >>- bodyMeasurementsOfJSON) of
-      (["measurements-csv"], _, _) ->
-        let query = readMeasurements
-        in run (runInTransaction query)
-          ("Error: An error occured while trying to read health measurements. " ++)
+      (["weight-csv"], _, _) ->
+        run (runInTransaction readWeightMeasurements) 
+          ("Error: An error occured while trying to read my weight measurements. " ++)
           (\measurements -> Env.reply (showCSV $ measurementsToCSV measurements))
           env
       (["record-blood-pressure"], Just (measurementTimestamp, bloodPressure), _) -> do
