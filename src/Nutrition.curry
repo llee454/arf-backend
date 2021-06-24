@@ -97,7 +97,7 @@ mealToCSV (Meal (Just k) _ timestamp description calories _) = [
 
 ---
 mealsToCSV :: [Meal] -> [[String]]
-mealsToCSV = map mealToCSV
+mealsToCSV = (["ID", "Date", "Description", "Cals"]:) . map mealToCSV
 
 ---
 insertServing :: Int -> Serving -> DBAction ()
@@ -348,7 +348,7 @@ handler args env = do
       query <- calsByDay
       run (runInTransaction query)
         ("Error: An error occured while trying to compute the number of calories consumed each day. " ++)
-        (\entries -> Env.reply (showCSV $ map (\(d, cals) -> [show d, show cals]) entries))
+        (\entries -> Env.reply (showCSV $ ["Date", "Cals"] : (map (\(d, cals) -> [show d, show cals]) entries)))
         env
     ["cals-today"] -> caloriesToday (\cals -> Env.reply (show cals)) env
     ["meals-today"] -> do

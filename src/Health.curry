@@ -160,7 +160,7 @@ measurementToCSV (M.Measurement k _ timestamp _ _ value unit precision) = [
   ]
 
 measurementsToCSV :: [M.Measurement] -> [[String]]
-measurementsToCSV = map measurementToCSV
+measurementsToCSV = (["Time", "Weight", "Units", "Precision"]:) . map measurementToCSV
 
 --- 
 handler :: [String] -> Env -> IO ()
