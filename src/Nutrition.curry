@@ -334,6 +334,13 @@ calsByDay = do
       returnDB . Right .
         map (\(d, meals) -> (d, foldr (+.) 0 (map calories meals)))
 
+dailyCalsToCSV :: [(Int, Float)] -> [[String]]
+dailyCalsToCSV =
+  (["Day", "Cals"]:) . map f
+  where
+    f :: (Int, Float) -> [String]
+    f (d, cals) = [show d, show cals]
+
 --- 
 handler :: [String] -> Env -> IO ()
 handler args env = do
@@ -344,11 +351,27 @@ handler args env = do
         ("Error: An error occured while trying to read all of the meal entries in the database. " ++)
         (\meals -> Env.reply (showCSV $ mealsToCSV meals))
         env
+    ["gen-meals-csv-file"] ->
+      let query = readMeals
+      in run (runInTransaction query)
+        ("Error: An error occured while trying to read all of the meal entries in the database. " ++)
+        (\meals env -> do
+          writeCSVFile "exports/meals.csv" $ mealsToCSV meals
+          Env.reply "Success" env)
+        env
     ["daily-cals"] -> do
       query <- calsByDay
       run (runInTransaction query)
         ("Error: An error occured while trying to compute the number of calories consumed each day. " ++)
-        (\entries -> Env.reply (showCSV $ ["Date", "Cals"] : (map (\(d, cals) -> [show d, show cals]) entries)))
+        (\entries -> Env.reply (showCSV $ dailyCalsToCSV entries))
+        env
+    ["gen-daily-cals-file"] -> do
+      query <- calsByDay
+      run (runInTransaction query)
+        ("Error: An error occured while trying to compute the number of calories consumed each day. " ++)
+        (\entries env -> do
+          writeCSVFile "exports/daily_cals.csv" $ dailyCalsToCSV entries
+          Env.reply "Success" env)
         env
     ["cals-today"] -> caloriesToday (\cals -> Env.reply (show cals)) env
     ["meals-today"] -> do

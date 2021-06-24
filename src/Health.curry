@@ -173,6 +173,13 @@ handler args env = do
           ("Error: An error occured while trying to read my weight measurements. " ++)
           (\measurements -> Env.reply (showCSV $ measurementsToCSV measurements))
           env
+      (["gen-weight-csv"], _, _) ->
+        run (runInTransaction readWeightMeasurements)
+          ("Error: An error occured while trying to read my weight measurements. " ++)
+          (\measurements env -> do
+            writeCSVFile "exports/weight.csv" $ measurementsToCSV measurements
+            Env.reply "Success" env)
+          env
       (["record-blood-pressure"], Just (measurementTimestamp, bloodPressure), _) -> do
         query <- insertBloodPressure bloodPressure measurementTimestamp
         run (runInTransaction query)
