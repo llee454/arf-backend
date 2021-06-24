@@ -155,7 +155,7 @@ measurementToCSV :: M.Measurement -> [String]
 measurementToCSV (M.Measurement k _ timestamp _ _ value unit precision) = [
     (toISO8601 $ fromPosix timestamp),
     (show value),
-    (show unit),
+    unit,
     (show precision)
   ]
 
