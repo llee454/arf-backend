@@ -153,7 +153,6 @@ readWeightMeasurements = readAttribMeasurements "Health.BodyMeasurement.weight"
 --- Accepts a health measurement concerning me and returns the equivalent CSV row.
 measurementToCSV :: M.Measurement -> [String]
 measurementToCSV (M.Measurement k _ timestamp _ _ value unit precision) = [
-    (show k),
     (toISO8601 $ fromPosix timestamp),
     (show value),
     (show unit),
