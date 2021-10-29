@@ -46,6 +46,12 @@ maybeIntOfJSON json =
     JNull     -> Just Nothing
     _         -> Nothing
 
+stringOfJSON :: JValue -> Maybe String
+stringOfJSON json =
+  case json of
+    (JString x) -> Just x
+    _           -> Nothing
+
 ---
 maybeToJSON :: (a -> JValue) -> Maybe a -> JValue
 maybeToJSON = bindMaybe JNull

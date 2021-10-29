@@ -22,6 +22,10 @@ arf =
      Entity "Serving" [
        Attribute "ServingType" (StringDom Nothing) NoKey False,
        Attribute "Amount" (IntDom Nothing) NoKey False]
+     -- Anxiety Entities
+     Entity "Anxiety" [
+       Attribute "Symptoms" (
+     ]
    ]
    [
      Relationship "Entity_entry" [
