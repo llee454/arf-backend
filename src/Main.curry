@@ -42,7 +42,7 @@ handlers = [
     ("measurement", Measurement.handler),
     ("nutrition",   Nutrition.handler),
     ("status",      const (reply "Available")),
-    ("version",     const (reply "1.0.0"))
+    ("version",     const (reply "1.0.1"))
   ]
 
 --- Registers modules that perform database initializations.
