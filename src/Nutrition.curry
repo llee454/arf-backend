@@ -244,7 +244,7 @@ calorieLimit :: IO Float
 calorieLimit = do
   t <- getCurrPosixTime
   s <- getMidnightPosix
-  return $ calorieConsumptionRate *. ((i2f t) -. (i2f s) -. (6 *. 3600)) /. 3600
+  return $ calorieConsumptionRate *. ((i2f t) -. (i2f s) -. (8 *. 3600)) /. 3600
 
 --- Returns the number of calories remaining to be consumed.
 ---
