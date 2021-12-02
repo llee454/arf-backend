@@ -228,15 +228,15 @@ readMealsToday = getMidnightPosix >>= return . readMealsAfter
 
 --- The recommended daily calorie limit when trying to lose weight.
 dailyCalorieLimit :: Float
-dailyCalorieLimit = 1900
+dailyCalorieLimit = 1800
 
 --- Returns the number of calories that I should aim to consume each hour
 --- when trying to lose weight.
 ---
 --- Note: this function assumes that I eat all of my meals between
---- 6:00 AM and 9:00 PM (local time).
+--- 8:00 AM and 10:00 PM (local time).
 calorieConsumptionRate :: Float
-calorieConsumptionRate = dailyCalorieLimit /. (12 +. 9 -. 6)
+calorieConsumptionRate = dailyCalorieLimit /. (12 +. 10 -. 8)
 
 --- Returns the number of calories that I should aim to consume by the
 --- current time.
